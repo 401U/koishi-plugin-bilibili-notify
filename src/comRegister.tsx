@@ -30,20 +30,8 @@ class ComRegister {
         dynamicDispose: Function
     }[] = []
 
-    // QQ群机器人
-    qqBot: Bot<Context>
-    // QQ频道机器人
-    qqguildBot: Bot<Context>
-    // OneBot机器人
-    oneBot: Bot<Context>
-    // Red机器人
-    redBot: Bot<Context>
-    // Telegram机器人
-    telegramBot: Bot<Context>
-    // Satori机器人
-    satoriBot: Bot<Context>
-    // Chronocat机器人
-    chronocatBot: Bot<Context>
+    static supportedPlatforms= [
+        'qq', 'qqguild', 'onebot', 'red', 'telegram', 'satori', 'chronocat'];
 
     constructor(ctx: Context, config: ComRegister.Config) {
         this.logger = ctx.logger('cr')
@@ -54,18 +42,6 @@ class ComRegister {
             this.logger.info('已停止工作');
         }) */
         this.config = config
-        // 拿到各类机器人
-        ctx.bots.forEach(bot => {
-            switch (bot.platform) {
-                case 'qq': this.qqBot = bot; break
-                case 'qqguild': this.qqguildBot = bot; break
-                case 'onebot': this.oneBot = bot; break
-                case 'red': this.redBot = bot; break
-                case 'telegram': this.telegramBot = bot; break
-                case 'satori': this.satoriBot = bot; break
-                case 'chronocat': this.chronocatBot = bot; break
-            }
-        })
 
         // 从数据库获取订阅
         this.getSubFromDatabase(ctx)
@@ -270,44 +246,44 @@ class ComRegister {
             .usage('取消订阅，加-l为取消直播订阅，加-d为取消动态订阅，什么都不加则为全部取消')
             .option('live', '-l')
             .option('dynamic', '-d')
+            .option('all', '-a')
             .example('bili unsub 用户UID -ld')
             .action(async ({ session, options }, uid) => {
                 this.logger.info('调用bili.unsub指令')
+                session.send(`取消订阅${uid}的动态`)
                 // 若用户UID为空则直接返回
-                if (!uid) return '用户UID不能为空'
-                // -d -l两个选项不能同时存在
-                if (options.dynamic && options.live) return '需要取消订阅该UP主请直接使用指令bili unsub 用户UID'
+                // if (!uid) return '用户UID不能为空'
                 // 定义是否存在
-                let exist: boolean
-                await Promise.all(this.subManager.map(async (sub, i) => {
-                    if (sub.uid === uid) {
-                        // 取消单个订阅
-                        if (options.live || options.dynamic) {
-                            if (options.live) await session.send(this.unsubSingle(ctx, sub.roomId, 0)) /* 0为取消订阅Live */
-                            if (options.dynamic) await session.send(this.unsubSingle(ctx, sub.uid, 1)) /* 1为取消订阅Dynamic */
-                            // 将存在flag设置为true
-                            exist = true
-                            return
-                        }
-                        // 取消全部订阅 执行dispose方法，销毁定时器
-                        if (sub.dynamic) this.subManager[i].dynamicDispose()
-                        if (sub.live) this.subManager[i].liveDispose()
-                        // 从数据库中删除订阅
-                        await ctx.database.remove('bilibili', { uid: this.subManager[i].uid })
-                        // 将该订阅对象从订阅管理对象中移除
-                        this.subManager.splice(i, 1)
-                        // id--
-                        this.num--
-                        // 发送成功通知
-                        session.send('已取消订阅该用户')
-                        // 更新控制台提示
-                        this.updateSubNotifier(ctx)
-                        // 将存在flag设置为true
-                        exist = true
-                    }
-                }))
+                // let exist: boolean
+                // await Promise.all(this.subManager.map(async (sub, i) => {
+                //     if (sub.uid === uid) {
+                //         // 取消单个订阅
+                //         if (options.live || options.dynamic) {
+                //             if (options.live) await session.send(this.unsubSingle(ctx, sub.roomId, 0)) /* 0为取消订阅Live */
+                //             if (options.dynamic) await session.send(this.unsubSingle(ctx, sub.uid, 1)) /* 1为取消订阅Dynamic */
+                //             // 将存在flag设置为true
+                //             exist = true
+                //             return
+                //         }
+                //         // 取消全部订阅 执行dispose方法，销毁定时器
+                //         if (sub.dynamic) this.subManager[i].dynamicDispose()
+                //         if (sub.live) this.subManager[i].liveDispose()
+                //         // 从数据库中删除订阅
+                //         await ctx.database.remove('bili_sub', { uid: this.subManager[i].uid })
+                //         // 将该订阅对象从订阅管理对象中移除
+                //         this.subManager.splice(i, 1)
+                //         // id--
+                //         this.num--
+                //         // 发送成功通知
+                //         session.send('已取消订阅该用户')
+                //         // 更新控制台提示
+                //         this.updateSubNotifier(ctx)
+                //         // 将存在flag设置为true
+                //         exist = true
+                //     }
+                // }))
                 // 未订阅该用户，无需取消订阅
-                !exist && session.send('未订阅该用户，无需取消订阅')
+                // !exist && session.send('未订阅该用户，无需取消订阅')
             })
 
         biliCom
@@ -320,31 +296,18 @@ class ComRegister {
             })
 
         biliCom
-            .subcommand('.sub <mid:string> [...guildId:string]', '订阅用户动态和直播通知')
-            .option('live', '-l')
-            .option('dynamic', '-d')
+            .subcommand('.sub <mid:string> [...targets:string]', '订阅B站用户动态和直播通知')
+            .option('live', '-l 订阅直播')
+            .option('dynamic', '-d 订阅动态')
             .usage('订阅用户动态和直播通知，若需要订阅直播请加上-l，需要订阅动态则加上-d。若没有加任何参数，之后会向你单独询问，尖括号中为必选参数，中括号为可选参数，目标群号若不填，则默认为当前群聊')
-            .example('bili sub 1194210119 目标QQ群号(实验性) -l -d 订阅UID为1194210119的UP主的动态和直播')
-            .action(async ({ session, options }, mid, ...guildId) => {
+            .example('bili sub 1194210119 目标频道 -l -d 订阅UID为1194210119的UP主的动态和直播')
+            .action(async ({ session, options }, mid, ...targets) => {
                 this.logger.info('调用bili.sub指令')
-                // 检查是否是不支持的平台
-                switch (session.event.platform) {
-                    case 'red':
-                    case 'onebot':
-                    case 'telegram':
-                    case 'satori':
-                    case 'chronocat':
-                    case 'qq':
-                    case 'qqguild': break
-                    default: return '暂不支持该平台'
-                }
                 // 检查是否登录
                 if (!(await this.checkIfIsLogin(ctx))) {
                     // 未登录直接返回
                     return '请使用指令bili login登录后再进行订阅操作'
                 }
-                // 如果订阅人数超过三个则直接返回
-                if (!config.unlockSubLimits && this.num >= 3) return '目前最多只能订阅三个人'
                 // 检查必选参数是否有值
                 if (!mid) return '请输入用户uid'
                 // 判断要订阅的用户是否已经存在于订阅管理对象中
@@ -374,77 +337,19 @@ class ComRegister {
                 }
                 // 设置目标ID
                 let targetId: string
-                // 判断是否输入了QQ群号
-                if (guildId.length > 0) { // 输入了QQ群号
-                    // 定义方法
-                    const checkIfGuildHasJoined = async (bot: Bot<Context>): Promise<Array<string>> => {
-                        // 获取机器人加入的群组
-                        const guildList = await bot.getGuildList()
-                        // 定义满足条件的群组数组
-                        const targetArr = []
-                        // 判断群号是否符合条件
-                        for (let guild of guildId) {
-                            if (guildList.data.some(cv => cv.id === guild)) { // 机器人加入了该群
-                                // 保存到数组
-                                targetArr.push(guild)
-                                // 继续下一个循环
-                                continue
-                            }
-                            // 不满足条件发送错误提示
-                            session.send(`您的机器未加入${guild}，无法对该群进行推送`)
-                        }
-                        // 返回数组
-                        return targetArr
-                    }
-                    // 定义可用的群组数组
-                    let okGuild: string[] = []
-                    // 判断是否需要加入的群全部推送
-                    if (guildId[0] === 'all') {
-                        // 判断是否有群机器人相关Bot
-                        if (['qq', 'onebot', 'red', 'satori', 'chronocat'].includes(session.event.platform)) {
-                            okGuild.push('all')
-                        } else {
-                            // 发送错误提示并返回
-                            session.send('您尚未配置任何QQ群相关机器人，不能对QQ群进行操作')
-                            // 直接返回
-                            return
-                        }
+                let currPlatform = session.platform
+
+
+                // 为未填写platform的部分填充当前平台的platform
+                let targetChannels = targets.map(guildStr => {
+                    if(!guildStr.includes(':')){
+                        return `${currPlatform}:${guildStr}`
                     } else {
-                        // 判断是否有群机器人相关Bot
-                        switch (session.event.platform) {
-                            case 'qq': {
-                                okGuild = await checkIfGuildHasJoined(this.qqBot)
-                                break
-                            }
-                            case 'onebot': {
-                                okGuild = await checkIfGuildHasJoined(this.oneBot)
-                                break
-                            }
-                            case 'red': {
-                                okGuild = await checkIfGuildHasJoined(this.redBot)
-                                break
-                            }
-                            case 'satori': {
-                                okGuild = await checkIfGuildHasJoined(this.satoriBot)
-                                break
-                            }
-                            case 'chronocat': {
-                                okGuild = await checkIfGuildHasJoined(this.chronocatBot)
-                                break
-                            }
-                            default: {
-                                // 发送错误提示并返回
-                                session.send('您尚未配置任何QQ群相关机器人，不能对QQ群进行操作')
-                                // 直接返回
-                                return
-                            }
-                        }
+                        return guildStr
                     }
-                    // 将群号用空格进行分割
-                    targetId = okGuild.join(' ')
-                } else { // 没有输入QQ群号
-                    // 为当前群聊环境进行推送
-                    targetId = session.event.channel.id
+                })
+                if (targetChannels.length === 0) {
+                    targetChannels = [`${currPlatform}:${session.channelId}`]
                 }
                 // 获取data
                 const { data } = content
@@ -459,30 +364,17 @@ class ComRegister {
                 // 获取直播房间号
                 let roomId = data.live_room?.roomid.toString()
                 // 保存到数据库中
-                const sub = await ctx.database.create('bilibili', {
+                let sub = await ctx.database.create('bili_user', {
                     uid: mid,
-                    room_id: roomId,
-                    dynamic: dynamicMsg ? 1 : 0,
-                    video: 1,
-                    live: liveMsg ? 1 : 0,
-                    targetId,
-                    platform: session.event.platform,
-                    time: new Date()
+                    room_id: roomId
                 })
-                // 订阅数+1
-                this.num++
-                // 开始订阅
-                // 保存新订阅对象
-                this.subManager.push({
-                    id: sub.id,
-                    uid: mid,
-                    targetId,
-                    roomId,
-                    platform: session.event.platform,
-                    live: liveMsg,
-                    dynamic: dynamicMsg,
-                    liveDispose: null,
-                    dynamicDispose: null
+                targetChannels.forEach(async (channel: string) => {
+                    await ctx.database.create('bili_sub', {
+                        uid: mid,
+                        channel,
+                        live: liveMsg ? 1 : 0,
+                        dynamic: dynamicMsg ? 1 : 0
+                    })
                 })
                 // 获取用户信息
                 let userData: any
@@ -495,13 +387,13 @@ class ComRegister {
                 }
                 // 需要订阅直播
                 if (liveMsg) {
-                    await session.execute(`bili live ${roomId} ${targetId.split(',').join(' ')}`)
+                    // await session.execute(`bili live ${roomId} ${targetId.split(',').join(' ')}`)
                     // 发送订阅消息通知
                     await session.send(`订阅${userData.info.uname}直播通知`)
                 }
                 // 需要订阅动态
                 if (dynamicMsg) {
-                    await session.execute(`bili dynamic ${mid} ${targetId.split(',').join(' ')}`)
+                    // await session.execute(`bili dynamic ${mid} ${targetId.split(',').join(' ')}`)
                     // 发送订阅消息通知
                     await session.send(`订阅${userData.info.uname}动态通知`)
                 }
@@ -509,51 +401,51 @@ class ComRegister {
                 this.updateSubNotifier(ctx)
             })
 
-        biliCom
-            .subcommand('.dynamic <uid:string> <...guildId:string>', '订阅用户动态推送', { hidden: true })
-            .usage('订阅用户动态推送')
-            .example('bili dynamic 1194210119 订阅UID为1194210119的动态')
-            .action(async ({ session }, uid, ...guildId) => {
-                this.logger.info('调用bili.dynamic指令')
-                // 如果uid为空则返回
-                if (!uid) return `${uid}非法调用 dynamic 指令` // 用户uid不能为空
-                if (!guildId) return `${uid}非法调用 dynamic 指令` // 目标群组或频道不能为空
-                // 寻找对应订阅管理对象
-                const index = this.subManager.findIndex(sub => sub.uid === uid)
-                // 不存在则直接返回
-                if (index === -1) return '请勿直接调用该指令'
-                // 获得对应bot
-                const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-                // 开始循环检测
-                let dispose: () => void
-                if (this.config.dynamicDebugMode) {
-                    dispose = ctx.setInterval(this.debug_dynamicDetect(ctx, bot, uid, guildId), config.dynamicLoopTime * 1000)
-                } else {
-                    dispose = ctx.setInterval(this.dynamicDetect(ctx, bot, uid, guildId), config.dynamicLoopTime * 1000)
-                }
-                // 将销毁函数保存到订阅管理对象
-                this.subManager[index].dynamicDispose = dispose
-            })
+        // biliCom
+        //     .subcommand('.dynamic <uid:string> <...guildId:string>', '订阅用户动态推送', { hidden: true })
+        //     .usage('订阅用户动态推送')
+        //     .example('bili dynamic 1194210119 订阅UID为1194210119的动态')
+        //     .action(async ({ session }, uid, ...guildId) => {
+        //         this.logger.info('调用bili.dynamic指令')
+        //         // 如果uid为空则返回
+        //         if (!uid) return `${uid}非法调用 dynamic 指令` // 用户uid不能为空
+        //         if (!guildId) return `${uid}非法调用 dynamic 指令` // 目标群组或频道不能为空
+        //         // 寻找对应订阅管理对象
+        //         const index = this.subManager.findIndex(sub => sub.uid === uid)
+        //         // 不存在则直接返回
+        //         if (index === -1) return '请勿直接调用该指令'
+        //         // 获得对应bot
+        //         const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
+        //         // 开始循环检测
+        //         let dispose: () => void
+        //         if (this.config.dynamicDebugMode) {
+        //             dispose = ctx.setInterval(this.debug_dynamicDetect(ctx, bot, uid, guildId), config.dynamicLoopTime * 1000)
+        //         } else {
+        //             dispose = ctx.setInterval(this.dynamicDetect(ctx, bot, uid, guildId), config.dynamicLoopTime * 1000)
+        //         }
+        //         // 将销毁函数保存到订阅管理对象
+        //         this.subManager[index].dynamicDispose = dispose
+        //     })
 
-        biliCom
-            .subcommand('.live <roomId:string> <...guildId:string>', '订阅主播开播通知', { hidden: true })
-            .usage('订阅主播开播通知')
-            .example('bili live 26316137 订阅房间号为26316137的直播间')
-            .action(async ({ session }, roomId, ...guildId) => {
-                this.logger.info('调用bili.live指令')
-                // 如果room_id为空则返回
-                if (!roomId) return `${roomId}非法调用 dynamic 指令` // 订阅主播房间号不能为空
-                if (!guildId) return `${roomId}非法调用 dynamic 指令` // 目标群组或频道不能为空
-                // 要订阅的对象不在订阅管理对象中，直接返回
-                const index = this.subManager.findIndex(sub => sub.roomId === roomId)
-                if (index === -1) return '请勿直接调用该指令'
-                // 获得对应bot
-                const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-                // 开始循环检测
-                const dispose = ctx.setInterval(this.liveDetect(ctx, bot, roomId, guildId), config.liveLoopTime * 1000)
-                // 保存销毁函数
-                this.subManager[index].liveDispose = dispose
-            })
+        // biliCom
+        //     .subcommand('.live <roomId:string> <...guildId:string>', '订阅主播开播通知', { hidden: true })
+        //     .usage('订阅主播开播通知')
+        //     .example('bili live 26316137 订阅房间号为26316137的直播间')
+        //     .action(async ({ session }, roomId, ...guildId) => {
+        //         this.logger.info('调用bili.live指令')
+        //         // 如果room_id为空则返回
+        //         if (!roomId) return `${roomId}非法调用 dynamic 指令` // 订阅主播房间号不能为空
+        //         if (!guildId) return `${roomId}非法调用 dynamic 指令` // 目标群组或频道不能为空
+        //         // 要订阅的对象不在订阅管理对象中，直接返回
+        //         const index = this.subManager.findIndex(sub => sub.roomId === roomId)
+        //         if (index === -1) return '请勿直接调用该指令'
+        //         // 获得对应bot
+        //         const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
+        //         // 开始循环检测
+        //         const dispose = ctx.setInterval(this.liveDetect(ctx, bot, roomId, guildId), config.liveLoopTime * 1000)
+        //         // 保存销毁函数
+        //         this.subManager[index].liveDispose = dispose
+        //     })
 
         biliCom
             .subcommand('.status <roomId:string>', '查询主播当前直播状态', { hidden: true })
@@ -614,97 +506,30 @@ class ComRegister {
             })
 
         biliCom
-            .subcommand('.private', '向主人账号发送一条测试消息', { hidden: true })
+            .subcommand('.private <msg:string>', '向主人账号发送一条测试消息', { hidden: true })
             .usage('向主人账号发送一条测试消息')
             .example('bili private 向主人账号发送一条测试消息')
-            .action(async ({ session }) => {
-                // 获得对应bot
-                const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-                // 发送消息
-                await this.sendPrivateMsg(bot, 'Hello World')
-                // 发送提示
-                await session.send('已发送消息，如未收到则说明您的机器人不支持发送私聊消息或您的信息填写有误')
+            .action(async ({ session }, msg) => {
+                let master = this.config.master
+                if (master.enable && master.masterAccount.trim() !== '') {
+                    let content = `B站动态转发插件-收到用户反馈\n平台:${session.platform}\nguildId：${session.guildId}\nchannelId：${session.channelId}\nuserId：${session.userId}\nuserName：${session.username}\n消息内容：${msg}`
+                    // 获得对应bot
+                    this.sendToMaster(ctx, content)
+                    // 发送提示
+                    await session.send('已发送消息，如未收到则说明您的机器人不支持发送私聊消息或您的信息填写有误')
+                }
             })
-
-        /* biliCom
-            .subcommand('.reboot', '测试插件自动重启功能', { hidden: true })
-            .usage('测试插件自动重启功能')
-            .example('bili reboot 测试插件自动重启功能')
-            .action(async ({ session }) => {
-                // 发送提示消息
-                await session.send('测试biliAPI等服务自动重启功能')
-                // 获得对应bot
-                const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-                // 发送提示消息，重启服务
-                await this.sendPrivateMsgAndRebootService(ctx, bot, '测试biliAPI等服务自动重启功能')
-            }) */
-
-        /* biliCom
-            .subcommand('.sendall', '测试给机器人加入的所有群发送消息', { hidden: true })
-            .usage('测试给机器人加入的所有群发送消息')
-            .example('bili sendall 测试给机器人加入的所有群发送消息')
-            .action(async ({ session }) => {
-                // 获得对应bot
-                const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-                // 发送消息
-                await this.sendMsg(ctx, ['all'], bot, 'Hello World')
-                // 发送提示
-                await session.send('已向机器人加入的所有群发送了消息')
-            }) */
-
-        /* biliCom
-            .subcommand('.list', '获取机器人加入的所有群组', { hidden: true })
-            .usage('获取当前机器人加入的所有群聊')
-            .example('bili list 获取当前机器人加入的所有群聊')
-            .action(async ({ session }) => {
-                // 获取对应Bot
-                const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-                // 获取群列表
-                const guildList = (await bot.getGuildList()).data
-                // 遍历群列表
-                guildList.map(item => this.logger.info(`已加入${item.id}`))
-            }) */
     }
 
-    getTheCorrespondingBotBasedOnTheSession(session: Session) {
-        // 获取对应Bot
-        let bot: Bot<Context>
-        switch (session.event.platform) {
-            case 'qq': bot = this.qqBot; break
-            case 'qqguild': bot = this.qqguildBot; break
-            case 'onebot': bot = this.oneBot; break
-            case 'red': bot = this.redBot; break
-            case 'telegram': bot = this.telegramBot; break
-            case 'satori': bot = this.satoriBot; break
-            case 'chronocat': bot = this.chronocatBot; break
-            default: {
-                session.send('暂不支持该平台！')
-            }
-        }
-        return bot
-    }
-
-    async sendPrivateMsg(bot: Bot<Context>, content: string) {
-        if (this.config.master.enable) {
-            if (this.config.master.masterAccountGuildId) {
-                // 向机器人主人发送消息
-                await bot.sendPrivateMessage(
-                    this.config.master.masterAccount,
-                    content,
-                    this.config.master.masterAccountGuildId
-                )
-            } else {
-                // 向机器人主人发送消息
-                await bot.sendPrivateMessage(
-                    this.config.master.masterAccount,
-                    content
-                )
-            }
-        }
+    private async sendToMaster(ctx: Context, content: h.Fragment){
+        let master = this.config.master
+                if (master.enable && master.masterAccount.trim() !== '') {
+                    ctx.database.broadcast([master.masterAccount], content)
+                }
     }
 
     async sendPrivateMsgAndRebootService(ctx: Context, bot: Bot<Context>, content: string) {
-        await this.sendPrivateMsg(bot, content)
+        await this.sendToMaster(ctx, content)
         // 重启插件
         const flag = await ctx.sm.restartPlugin(true /* 非人为重启，需要计数 */)
         // 判断是否重启成功
@@ -714,7 +539,7 @@ class ComRegister {
             // logger
             this.logger.error('已重启插件三次，请检查机器人状态后手动重启')
             // 重启失败，发送消息
-            await this.sendPrivateMsg(bot, '已重启插件三次，请检查机器人状态后手动重启')
+            await this.sendToMaster(ctx, '已重启插件三次，请检查机器人状态后手动重启')
             // 关闭插件
             await ctx.sm.disposePlugin()
         }
@@ -747,7 +572,7 @@ class ComRegister {
                 } catch (e) {
                     if (i === attempts - 1) { // 已尝试三次
                         this.logger.error(`发送群组ID:${guildId}消息失败！原因: ` + e.message)
-                        this.sendPrivateMsg(bot, `发送群组ID:${guildId}消息失败，请检查机器人状态`)
+                        this.sendToMaster(ctx, `发送群组ID:${guildId}消息失败，请检查机器人状态`)
                     }
                 }
             }
@@ -786,7 +611,7 @@ class ComRegister {
                         // 输出日志
                         this.logger.error('账号未登录，插件已停止工作，请登录后，输入指令 sys start 启动插件')
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '账号未登录，插件已停止工作，请登录后，输入指令 sys start 启动插件')
+                        await this.sendToMaster(ctx, '账号未登录，插件已停止工作，请登录后，输入指令 sys start 启动插件')
                         // 停止服务
                         await ctx.sm.disposePlugin()
                         // 结束循环
@@ -796,7 +621,7 @@ class ComRegister {
                         // 输出日志
                         this.logger.error('账号被风控，插件已停止工作，请确认风控解除后，输入指令 sys start 启动插件')
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '账号被风控，插件已停止工作，请确认风控解除后，输入指令 sys start 启动插件')
+                        await this.sendToMaster(ctx, '账号被风控，插件已停止工作，请确认风控解除后，输入指令 sys start 启动插件')
                         // 停止服务
                         await ctx.sm.disposePlugin()
                         // 结束循环
@@ -806,13 +631,13 @@ class ComRegister {
                         // 输出日志
                         this.logger.error('获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message);
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message); // 未知错误
+                        await this.sendToMaster(ctx, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message); // 未知错误
                         // 结束循环
                         break;
                     }
                     default: { // 未知错误
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message) // 未知错误
+                        await this.sendToMaster(ctx, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message) // 未知错误
                         // 取消订阅
                         this.unsubAll(ctx, bot, uid)
                         // 结束循环
@@ -835,86 +660,86 @@ class ComRegister {
                 }
             }
             // 发送请求 默认只查看配置文件规定数量的数据
-            for (let num = this.config.dynamicCheckNumber - 1; num >= 0; num--) {
-                // 没有动态内容则直接跳过
-                if (!items[num]) continue
-                // 寻找发布时间比时间点更晚的动态
-                if (items[num].modules.module_author.pub_ts > timePoint) {
-                    // 定义变量
-                    let pic: string
-                    let buffer: Buffer
-                    // 从动态数据中取出UP主名称和动态ID
-                    const upName = content.data.items[num].modules.module_author.name
-                    const dynamicId = content.data.items[num].id_str
-                    // 推送该条动态
-                    let attempts = 3;
-                    for (let i = 0; i < attempts; i++) {
-                        // 获取动态推送图片
-                        try {
-                            // 渲染图片
-                            const { pic: gimgPic, buffer: gimgBuffer } = await ctx.gi.generateDynamicImg(items[num])
-                            // 赋值
-                            pic = gimgPic
-                            buffer = gimgBuffer
-                            // 成功则跳出循环
-                            break
-                        } catch (e) {
-                            // 直播开播动态，不做处理
-                            if (e.message === '直播开播动态，不做处理') return updatePoint(num)
-                            if (e.message === '出现关键词，屏蔽该动态') {
-                                // 如果需要发送才发送
-                                this.config.filter.notify && await this.sendMsg(
-                                    ctx,
-                                    guildId,
-                                    bot,
-                                    `${upName}发布了一条含有屏蔽关键字的动态`,
-                                )
-                                return updatePoint(num)
-                            }
-                            if (e.message === '已屏蔽转发动态') {
-                                this.config.filter.notify && await this.sendMsg(
-                                    ctx,
-                                    guildId,
-                                    bot,
-                                    `${upName}发布了一条转发动态，已屏蔽`
-                                )
-                                return updatePoint(num)
-                            }
-                            // 未知错误
-                            if (i === attempts - 1) {
-                                this.logger.error('dynamicDetect generateDynamicImg() 推送卡片发送失败，原因：' + e.message)
-                                // 发送私聊消息并重启服务
-                                return await this.sendPrivateMsgAndRebootService(
-                                    ctx,
-                                    bot,
-                                    '插件可能出现某些未知错误，请尝试重启插件，如果仍然发生该错误，请带着日志向作者反馈',
-                                )
-                            }
-                        }
-                    }
-                    // 判断是否需要发送URL
-                    const dUrl = this.config.dynamicUrl ? `${upName}发布了一条动态：https://t.bilibili.com/${dynamicId}` : ''
-                    // 如果pic存在，则直接返回pic
-                    if (pic) {
-                        this.logger.info('推送动态中，使用render模式');
-                        // pic存在，使用的是render模式
-                        await this.sendMsg(ctx, guildId, bot, pic + <>{dUrl}</>)
-                    } else if (buffer) {
-                        this.logger.info('推送动态中，使用page模式');
-                        // pic不存在，说明使用的是page模式
-                        await this.sendMsg(
-                            ctx,
-                            guildId,
-                            bot,
-                            <>{h.image(buffer, 'image/png')}{dUrl}</>
-                        )
-                    } else {
-                        this.logger.info(items[num].modules.module_author.name + '发布了一条动态，但是推送失败');
-                    }
-                    // 更新时间点
-                    updatePoint(num)
-                }
-            }
+            // for (let num = this.config.dynamicCheckNumber - 1; num >= 0; num--) {
+            //     // 没有动态内容则直接跳过
+            //     if (!items[num]) continue
+            //     // 寻找发布时间比时间点更晚的动态
+            //     if (items[num].modules.module_author.pub_ts > timePoint) {
+            //         // 定义变量
+            //         let pic: string
+            //         let buffer: Buffer
+            //         // 从动态数据中取出UP主名称和动态ID
+            //         const upName = content.data.items[num].modules.module_author.name
+            //         const dynamicId = content.data.items[num].id_str
+            //         // 推送该条动态
+            //         let attempts = 3;
+            //         for (let i = 0; i < attempts; i++) {
+            //             // 获取动态推送图片
+            //             try {
+            //                 // 渲染图片
+            //                 const { pic: gimgPic, buffer: gimgBuffer } = await ctx.gi.generateDynamicImg(items[num])
+            //                 // 赋值
+            //                 pic = gimgPic
+            //                 buffer = gimgBuffer
+            //                 // 成功则跳出循环
+            //                 break
+            //             } catch (e) {
+            //                 // 直播开播动态，不做处理
+            //                 if (e.message === '直播开播动态，不做处理') return updatePoint(num)
+            //                 if (e.message === '出现关键词，屏蔽该动态') {
+            //                     // 如果需要发送才发送
+            //                     this.config.filter.notify && await this.sendMsg(
+            //                         ctx,
+            //                         guildId,
+            //                         bot,
+            //                         `${upName}发布了一条含有屏蔽关键字的动态`,
+            //                     )
+            //                     return updatePoint(num)
+            //                 }
+            //                 if (e.message === '已屏蔽转发动态') {
+            //                     this.config.filter.notify && await this.sendMsg(
+            //                         ctx,
+            //                         guildId,
+            //                         bot,
+            //                         `${upName}发布了一条转发动态，已屏蔽`
+            //                     )
+            //                     return updatePoint(num)
+            //                 }
+            //                 // 未知错误
+            //                 if (i === attempts - 1) {
+            //                     this.logger.error('dynamicDetect generateDynamicImg() 推送卡片发送失败，原因：' + e.message)
+            //                     // 发送私聊消息并重启服务
+            //                     return await this.sendPrivateMsgAndRebootService(
+            //                         ctx,
+            //                         bot,
+            //                         '插件可能出现某些未知错误，请尝试重启插件，如果仍然发生该错误，请带着日志向作者反馈',
+            //                     )
+            //                 }
+            //             }
+            //         }
+            //         // 判断是否需要发送URL
+            //         const dUrl = this.config.dynamicUrl ? `${upName}发布了一条动态：https://t.bilibili.com/${dynamicId}` : ''
+            //         // 如果pic存在，则直接返回pic
+            //         if (pic) {
+            //             this.logger.info('推送动态中，使用render模式');
+            //             // pic存在，使用的是render模式
+            //             await this.sendMsg(ctx, guildId, bot, pic + <>{dUrl}</>)
+            //         } else if (buffer) {
+            //             this.logger.info('推送动态中，使用page模式');
+            //             // pic不存在，说明使用的是page模式
+            //             await this.sendMsg(
+            //                 ctx,
+            //                 guildId,
+            //                 bot,
+            //                 <>{h.image(buffer, 'image/png')}{dUrl}</>
+            //             )
+            //         } else {
+            //             this.logger.info(items[num].modules.module_author.name + '发布了一条动态，但是推送失败');
+            //         }
+            //         // 更新时间点
+            //         updatePoint(num)
+            //     }
+            // }
         }
     }
 
@@ -953,7 +778,7 @@ class ComRegister {
                         // 输出日志
                         this.logger.error('账号未登录，插件已停止工作，请登录后，输入指令 sys start 启动插件')
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '账号未登录，插件已停止工作，请登录后，输入指令 sys start 启动插件')
+                        await this.sendToMaster(ctx, '账号未登录，插件已停止工作，请登录后，输入指令 sys start 启动插件')
                         // 停止服务
                         await ctx.sm.disposePlugin()
                         // 结束循环
@@ -963,7 +788,7 @@ class ComRegister {
                         // 输出日志
                         this.logger.error('账号被风控，插件已停止工作，请确认风控解除后，输入指令 sys start 启动插件')
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '账号被风控，插件已停止工作，请确认风控解除后，输入指令 sys start 启动插件')
+                        await this.sendToMaster(ctx, '账号被风控，插件已停止工作，请确认风控解除后，输入指令 sys start 启动插件')
                         // 停止服务
                         await ctx.sm.disposePlugin()
                         // 结束循环
@@ -973,13 +798,13 @@ class ComRegister {
                         // 输出日志
                         this.logger.error('获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message);
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message); // 未知错误
+                        await this.sendToMaster(ctx, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message); // 未知错误
                         // 结束循环
                         break;
                     }
                     default: { // 未知错误
                         // 发送私聊消息
-                        await this.sendPrivateMsg(bot, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message) // 未知错误
+                        await this.sendToMaster(ctx, '获取动态信息错误，错误码为：' + content.code + '，错误为：' + content.message) // 未知错误
                         // 取消订阅
                         this.unsubAll(ctx, bot, uid)
                         // 结束循环
@@ -988,6 +813,9 @@ class ComRegister {
                 }
             }
             // 获取数据内容
+            /**
+             * @type {any[]}
+             */
             const items = content.data.items
             this.logger.info(`UID：${uid}-获取到的动态信息：${items.map(v => v.basic.rid_str).join('、')}`)
             // 定义方法：更新时间点为最新发布动态的发布时间
@@ -1002,91 +830,94 @@ class ComRegister {
                     case 0: timePoint = items[num].modules.module_author.pub_ts
                 }
             }
+            items.forEach(item => {
+                
+            });
             // 发送请求 默认只查看配置文件规定数量的数据
-            for (let num = this.config.dynamicCheckNumber - 1; num >= 0; num--) {
-                // 没有动态内容则直接跳过
-                if (!items[num]) continue
-                // 寻找发布时间比时间点更晚的动态
-                if (items[num].modules.module_author.pub_ts > timePoint) {
-                    this.logger.info(`UID：${uid}-即将推送的动态：${items[num].basic.rid_str}`)
-                    // 定义变量
-                    let pic: string
-                    let buffer: Buffer
-                    // 从动态数据中取出UP主名称和动态ID
-                    const upName = content.data.items[num].modules.module_author.name
-                    const dynamicId = content.data.items[num].id_str
-                    // 推送该条动态
-                    let attempts = 3;
-                    this.logger.info(`UID：${uid}-尝试渲染推送图片`)
-                    for (let i = 0; i < attempts; i++) {
-                        // 获取动态推送图片
-                        try {
-                            // 渲染图片
-                            const { pic: gimgPic, buffer: gimgBuffer } = await ctx.gi.generateDynamicImg(items[num])
-                            // 赋值
-                            pic = gimgPic
-                            buffer = gimgBuffer
-                            // 成功则跳出循环
-                            break
-                        } catch (e) {
-                            // 直播开播动态，不做处理
-                            if (e.message === '直播开播动态，不做处理') return updatePoint(num)
-                            if (e.message === '出现关键词，屏蔽该动态') {
-                                // 如果需要发送才发送
-                                this.config.filter.notify && await this.sendMsg(
-                                    ctx,
-                                    guildId,
-                                    bot,
-                                    `${upName}发布了一条含有屏蔽关键字的动态`,
-                                )
-                                return updatePoint(num)
-                            }
-                            if (e.message === '已屏蔽转发动态') {
-                                this.config.filter.notify && await this.sendMsg(
-                                    ctx,
-                                    guildId,
-                                    bot,
-                                    `${upName}发布了一条转发动态，已屏蔽`
-                                )
-                                return updatePoint(num)
-                            }
-                            // 未知错误
-                            if (i === attempts - 1) {
-                                this.logger.error('dynamicDetect generateDynamicImg() 推送卡片发送失败，原因：' + e.message)
-                                // 发送私聊消息并重启服务
-                                return await this.sendPrivateMsgAndRebootService(
-                                    ctx,
-                                    bot,
-                                    '插件可能出现某些未知错误，请尝试重启插件，如果仍然发生该错误，请带着日志向作者反馈',
-                                )
-                            }
-                        }
-                    }
-                    this.logger.info(`UID：${uid}-尝试推送动态卡片`)
-                    // 判断是否需要发送URL
-                    const dUrl = this.config.dynamicUrl ? `${upName}发布了一条动态：https://t.bilibili.com/${dynamicId}` : ''
-                    // 如果pic存在，则直接返回pic
-                    if (pic) {
-                        this.logger.info(`UID：${uid}-推送动态中，使用render模式`);
-                        // pic存在，使用的是render模式
-                        await this.sendMsg(ctx, guildId, bot, pic + <>{dUrl}</>)
-                    } else if (buffer) {
-                        this.logger.info(`UID：${uid}-推送动态中，使用page模式`);
-                        // pic不存在，说明使用的是page模式
-                        await this.sendMsg(
-                            ctx,
-                            guildId,
-                            bot,
-                            <>{h.image(buffer, 'image/png')}{dUrl}</>
-                        )
-                    } else {
-                        this.logger.info(items[num].modules.module_author.name + '发布了一条动态，但是推送失败');
-                    }
-                    // 更新时间点
-                    updatePoint(num)
-                    this.logger.info(`UID：${uid}-推送动态完成`)
-                }
-            }
+            // for (let num = this.config.dynamicCheckNumber - 1; num >= 0; num--) {
+            //     // 没有动态内容则直接跳过
+            //     if (!items[num]) continue
+            //     // 寻找发布时间比时间点更晚的动态
+            //     if (items[num].modules.module_author.pub_ts > timePoint) {
+            //         this.logger.info(`UID：${uid}-即将推送的动态：${items[num].basic.rid_str}`)
+            //         // 定义变量
+            //         let pic: string
+            //         let buffer: Buffer
+            //         // 从动态数据中取出UP主名称和动态ID
+            //         const upName = content.data.items[num].modules.module_author.name
+            //         const dynamicId = content.data.items[num].id_str
+            //         // 推送该条动态
+            //         let attempts = 3;
+            //         this.logger.info(`UID：${uid}-尝试渲染推送图片`)
+            //         for (let i = 0; i < attempts; i++) {
+            //             // 获取动态推送图片
+            //             try {
+            //                 // 渲染图片
+            //                 const { pic: gimgPic, buffer: gimgBuffer } = await ctx.gi.generateDynamicImg(items[num])
+            //                 // 赋值
+            //                 pic = gimgPic
+            //                 buffer = gimgBuffer
+            //                 // 成功则跳出循环
+            //                 break
+            //             } catch (e) {
+            //                 // 直播开播动态，不做处理
+            //                 if (e.message === '直播开播动态，不做处理') return updatePoint(num)
+            //                 if (e.message === '出现关键词，屏蔽该动态') {
+            //                     // 如果需要发送才发送
+            //                     this.config.filter.notify && await this.sendMsg(
+            //                         ctx,
+            //                         guildId,
+            //                         bot,
+            //                         `${upName}发布了一条含有屏蔽关键字的动态`,
+            //                     )
+            //                     return updatePoint(num)
+            //                 }
+            //                 if (e.message === '已屏蔽转发动态') {
+            //                     this.config.filter.notify && await this.sendMsg(
+            //                         ctx,
+            //                         guildId,
+            //                         bot,
+            //                         `${upName}发布了一条转发动态，已屏蔽`
+            //                     )
+            //                     return updatePoint(num)
+            //                 }
+            //                 // 未知错误
+            //                 if (i === attempts - 1) {
+            //                     this.logger.error('dynamicDetect generateDynamicImg() 推送卡片发送失败，原因：' + e.message)
+            //                     // 发送私聊消息并重启服务
+            //                     return await this.sendPrivateMsgAndRebootService(
+            //                         ctx,
+            //                         bot,
+            //                         '插件可能出现某些未知错误，请尝试重启插件，如果仍然发生该错误，请带着日志向作者反馈',
+            //                     )
+            //                 }
+            //             }
+            //         }
+            //         this.logger.info(`UID：${uid}-尝试推送动态卡片`)
+            //         // 判断是否需要发送URL
+            //         const dUrl = this.config.dynamicUrl ? `${upName}发布了一条动态：https://t.bilibili.com/${dynamicId}` : ''
+            //         // 如果pic存在，则直接返回pic
+            //         if (pic) {
+            //             this.logger.info(`UID：${uid}-推送动态中，使用render模式`);
+            //             // pic存在，使用的是render模式
+            //             await this.sendMsg(ctx, guildId, bot, pic + <>{dUrl}</>)
+            //         } else if (buffer) {
+            //             this.logger.info(`UID：${uid}-推送动态中，使用page模式`);
+            //             // pic不存在，说明使用的是page模式
+            //             await this.sendMsg(
+            //                 ctx,
+            //                 guildId,
+            //                 bot,
+            //                 <>{h.image(buffer, 'image/png')}{dUrl}</>
+            //             )
+            //         } else {
+            //             this.logger.info(items[num].modules.module_author.name + '发布了一条动态，但是推送失败');
+            //         }
+            //         // 更新时间点
+            //         updatePoint(num)
+            //         this.logger.info(`UID：${uid}-推送动态完成`)
+            //     }
+            // }
         }
     }
 
@@ -1288,16 +1119,16 @@ class ComRegister {
                                 await sendLiveNotifyCard(data, uData, LiveType.StartBroadcasting, liveStartMsg)
                             }
                         } else { // 还在直播
-                            if (this.config.pushTime > 0) {
-                                timer++
-                                // 开始记录时间
-                                if (timer >= (6 * 60 * this.config.pushTime)) { // 到时间推送直播消息
-                                    // 到时间重新计时
-                                    timer = 0
-                                    // 发送直播通知卡片
-                                    sendLiveNotifyCard(data, uData, LiveType.LiveBroadcast)
-                                }
-                            }
+                            // if (this.config.pushTime > 0) {
+                            //     timer++
+                            //     // 开始记录时间
+                            //     if (timer >= (6 * 60 * this.config.pushTime)) { // 到时间推送直播消息
+                            //         // 到时间重新计时
+                            //         timer = 0
+                            //         // 发送直播通知卡片
+                            //         sendLiveNotifyCard(data, uData, LiveType.LiveBroadcast)
+                            //     }
+                            // }
                             // 否则继续循环
                         }
                     }
@@ -1400,245 +1231,237 @@ class ComRegister {
         // 判断登录信息是否已加载完毕
         await this.checkIfLoginInfoIsLoaded(ctx)
         // 如果未登录，则直接返回
-        if (!(await this.checkIfIsLogin(ctx))) {
-            // log
-            this.logger.info(`账号未登录，请登录`)
-            return
-        }
+        // if (!(await this.checkIfIsLogin(ctx))) {
+        //     // log
+        //     this.logger.info(`账号未登录，请登录`)
+        //     return
+        // }
         // 已存在订阅管理对象，不再进行订阅操作
-        if (this.subManager.length !== 0) return
+        // if (this.subManager.length !== 0) return
         // 从数据库中获取数据
-        const subData = await ctx.database.get('bilibili', { id: { $gt: 0 } })
+        // const subData = await ctx.database.get('bili_sub', { id: { $gt: 0 } })
         // 设定订阅数量
-        this.num = subData.length
-        // 如果订阅数量超过三个则数据库被非法修改
-        if (!this.config.unlockSubLimits && this.num > 3) {
-            // 在控制台提示重新订阅
-            ctx.notifier.create({
-                type: 'danger',
-                content: '您未解锁订阅限制，且订阅数大于3人，请您手动删除bilibili表中多余的数据后重启本插件'
-            })
-            return
-        }
+        // this.num = subData.length
         // 循环遍历
-        for (const sub of subData) {
-            // 定义Bot
-            let bot: Bot<Context>
-            // 判断是否存在没有任何订阅的数据
-            if (!sub.dynamic && !sub.live) { // 存在未订阅任何项目的数据
-                // 删除该条数据
-                ctx.database.remove('bilibili', { id: sub.id })
-                // log
-                this.logger.warn(`UID:${sub.uid} 该条数据没有任何订阅数据，自动取消订阅`)
-                // 跳过下面的步骤
-                continue
-            }
-            // 获取推送目标数组
-            const targetArr = sub.targetId.split(' ')
-            // 拿到对应bot
-            switch (sub.platform) {
-                case 'qq': bot = this.qqBot; break
-                case 'qqguild': bot = this.qqguildBot; break
-                case 'onebot': bot = this.oneBot; break
-                case 'red': bot = this.redBot; break
-                case 'telegram': bot = this.telegramBot; break
-                case 'satori': bot = this.satoriBot; break
-                case 'chronocat': bot = this.chronocatBot; break
-                default: {
-                    // 本条数据被篡改，删除该条订阅
-                    ctx.database.remove('bilibili', { id: sub.id })
-                    // 不支持的协议
-                    this.logger.info(`UID:${sub.uid} 出现不支持的协议，该条数据被篡改，自动取消订阅`)
-                    // 发送消息
-                    await this.sendPrivateMsg(bot, `UID:${sub.uid} 出现不支持的协议，该条数据被篡改，自动取消订阅`)
-                    // 继续下个循环
-                    continue
-                }
-            }
+        // for (const sub of subData) {
+        //     // 定义Bot
+        //     let bot: Bot<Context>
+        //     // 判断是否存在没有任何订阅的数据
+        //     if (!sub.dynamic && !sub.live) { // 存在未订阅任何项目的数据
+        //         // 删除该条数据
+        //         ctx.database.remove('bilibili', { id: sub.id })
+        //         // log
+        //         this.logger.warn(`UID:${sub.uid} 该条数据没有任何订阅数据，自动取消订阅`)
+        //         // 跳过下面的步骤
+        //         continue
+        //     }
+        //     // 获取推送目标数组
+        //     const targetArr = sub.targetId.split(' ')
+        //     // 拿到对应bot
+        //     switch (sub.platform) {
+        //         case 'qq': bot = this.qqBot; break
+        //         case 'qqguild': bot = this.qqguildBot; break
+        //         case 'onebot': bot = this.oneBot; break
+        //         case 'red': bot = this.redBot; break
+        //         case 'telegram': bot = this.telegramBot; break
+        //         case 'satori': bot = this.satoriBot; break
+        //         case 'chronocat': bot = this.chronocatBot; break
+        //         default: {
+        //             // 本条数据被篡改，删除该条订阅
+        //             ctx.database.remove('bilibili', { id: sub.id })
+        //             // 不支持的协议
+        //             this.logger.info(`UID:${sub.uid} 出现不支持的协议，该条数据被篡改，自动取消订阅`)
+        //             // 发送消息
+        //             await this.sendToMaster(ctx, `UID:${sub.uid} 出现不支持的协议，该条数据被篡改，自动取消订阅`)
+        //             // 继续下个循环
+        //             continue
+        //         }
+        //     }
             // 判断数据库是否被篡改
             // 获取用户信息
-            let content: any
-            let attempts = 3
-            for (let i = 0; i < attempts; i++) {
-                try {
-                    // 获取用户信息
-                    content = await ctx.ba.getUserInfo(sub.uid)
-                    // 成功则跳出循环
-                    break
-                } catch (e) {
-                    this.logger.error('getSubFromDatabase() getUserInfo() 发生了错误，错误为：' + e.message)
-                    if (i === attempts - 1) { // 已尝试三次
-                        return await this.sendPrivateMsgAndRebootService(
-                            ctx,
-                            bot,
-                            '你的网络可能出现了某些问题，请检查后重启插件',
-                        )
-                    }
-                }
-            }
+            // let content: any
+            // let attempts = 3
+            // for (let i = 0; i < attempts; i++) {
+            //     try {
+            //         // 获取用户信息
+            //         content = await ctx.ba.getUserInfo(sub.uid)
+            //         // 成功则跳出循环
+            //         break
+            //     } catch (e) {
+            //         this.logger.error('getSubFromDatabase() getUserInfo() 发生了错误，错误为：' + e.message)
+            //         if (i === attempts - 1) { // 已尝试三次
+            //             return await this.sendPrivateMsgAndRebootService(
+            //                 ctx,
+            //                 bot,
+            //                 '你的网络可能出现了某些问题，请检查后重启插件',
+            //             )
+            //         }
+            //     }
+            // }
             // 获取data
-            const { data } = content
-            // 定义函数删除数据和发送提示
-            const deleteSub = async () => {
-                // 从数据库删除该条数据
-                await ctx.database.remove('bilibili', { id: sub.id })
-                // 给用户发送提示
-                await this.sendPrivateMsg(bot, `UID:${sub.uid} 数据库内容被篡改，已取消对该UP主的订阅`)
-            }
-            // 判断是否有其他问题
-            if (content.code !== 0) {
-                switch (content.code) {
-                    case -352:
-                    case -403: {
-                        await this.sendPrivateMsg(bot, '你的登录信息已过期，请重新登录Bilibili')
-                        return
-                    }
-                    case -400:
-                    case -404:
-                    default: {
-                        await deleteSub()
-                        // PrivateMsg
-                        await this.sendPrivateMsg(bot, `UID:${sub.uid} 数据出现问题，自动取消订阅`)
-                        // log
-                        this.logger.info(`UID:${sub.uid} 数据出现问题，自动取消订阅`)
-                        return
-                    }
-                }
-            }
+            // const { data } = content
+            // // 定义函数删除数据和发送提示
+            // const deleteSub = async () => {
+            //     // 从数据库删除该条数据
+            //     await ctx.database.remove('bilibili', { id: sub.id })
+            //     // 给用户发送提示
+            //     await this.sendToMaster(ctx, `UID:${sub.uid} 数据库内容被篡改，已取消对该UP主的订阅`)
+            // }
+            // // 判断是否有其他问题
+            // if (content.code !== 0) {
+            //     switch (content.code) {
+            //         case -352:
+            //         case -403: {
+            //             await this.sendToMaster(ctx, '你的登录信息已过期，请重新登录Bilibili')
+            //             return
+            //         }
+            //         case -400:
+            //         case -404:
+            //         default: {
+            //             await deleteSub()
+            //             // PrivateMsg
+            //             await this.sendToMaster(ctx, `UID:${sub.uid} 数据出现问题，自动取消订阅`)
+            //             // log
+            //             this.logger.info(`UID:${sub.uid} 数据出现问题，自动取消订阅`)
+            //             return
+            //         }
+            //     }
+            // }
             // 检测房间号是否被篡改
-            if (sub.live && (!data.live_room || data.live_room.roomid.toString() !== sub.room_id)) {
-                // 房间号被篡改，删除该订阅
-                await deleteSub()
-                // log
-                this.logger.info(`UID:${sub.uid} 房间号被篡改，自动取消订阅`)
-                // Send msg
-                await this.sendPrivateMsg(bot, `UID:${sub.uid} 房间号被篡改，自动取消订阅`)
-                return
-            }
-            // 构建订阅对象
-            let subManagerItem = {
-                id: sub.id,
-                uid: sub.uid,
-                roomId: sub.room_id,
-                targetId: sub.targetId,
-                platform: sub.platform,
-                live: +sub.live === 1 ? true : false,
-                dynamic: +sub.dynamic === 1 ? true : false,
-                liveDispose: null,
-                dynamicDispose: null
-            }
-            // 判断需要订阅的服务
-            if (sub.dynamic) { // 需要订阅动态
-                let dispose: () => void
-                // 开始循环检测
-                if (this.config.dynamicDebugMode) {
-                    dispose = ctx.setInterval(
-                        this.debug_dynamicDetect(ctx, bot, sub.uid, targetArr),
-                        this.config.dynamicLoopTime * 1000
-                    )
-                } else {
-                    dispose = ctx.setInterval(
-                        this.dynamicDetect(ctx, bot, sub.uid, targetArr),
-                        this.config.dynamicLoopTime * 1000
-                    )
-                }
-                // 保存销毁函数
-                subManagerItem.dynamicDispose = dispose
-            }
+            // if (sub.live && (!data.live_room || data.live_room.roomid.toString() !== sub.room_id)) {
+            //     // 房间号被篡改，删除该订阅
+            //     await deleteSub()
+            //     // log
+            //     this.logger.info(`UID:${sub.uid} 房间号被篡改，自动取消订阅`)
+            //     // Send msg
+            //     await this.sendToMaster(ctx, `UID:${sub.uid} 房间号被篡改，自动取消订阅`)
+            //     return
+            // }
+            // // 构建订阅对象
+            // let subManagerItem = {
+            //     id: sub.id,
+            //     uid: sub.uid,
+            //     roomId: sub.room_id,
+            //     targetId: sub.targetId,
+            //     platform: sub.platform,
+            //     live: +sub.live === 1 ? true : false,
+            //     dynamic: +sub.dynamic === 1 ? true : false,
+            //     liveDispose: null,
+            //     dynamicDispose: null
+            // }
+            // // 判断需要订阅的服务
+            // if (sub.dynamic) { // 需要订阅动态
+            //     let dispose: () => void
+            //     // 开始循环检测
+            //     if (this.config.dynamicDebugMode) {
+            //         dispose = ctx.setInterval(
+            //             this.debug_dynamicDetect(ctx, bot, sub.uid, targetArr),
+            //             this.config.dynamicLoopTime * 1000
+            //         )
+            //     } else {
+            //         dispose = ctx.setInterval(
+            //             this.dynamicDetect(ctx, bot, sub.uid, targetArr),
+            //             this.config.dynamicLoopTime * 1000
+            //         )
+            //     }
+            //     // 保存销毁函数
+            //     subManagerItem.dynamicDispose = dispose
+            // }
 
-            if (sub.live) { // 需要订阅直播
-                // 开始循环检测
-                const dispose = ctx.setInterval(
-                    this.liveDetect(ctx, bot, sub.room_id, targetArr),
-                    this.config.liveLoopTime * 1000
-                )
-                // 保存销毁函数
-                subManagerItem.liveDispose = dispose
-            }
-            // 保存新订阅对象
-            this.subManager.push(subManagerItem)
-        }
+            // if (sub.live) { // 需要订阅直播
+            //     // 开始循环检测
+            //     const dispose = ctx.setInterval(
+            //         this.liveDetect(ctx, bot, sub.room_id, targetArr),
+            //         this.config.liveLoopTime * 1000
+            //     )
+            //     // 保存销毁函数
+            //     subManagerItem.liveDispose = dispose
+            // }
+            // // 保存新订阅对象
+            // this.subManager.push(subManagerItem)
+        // }
         // 在控制台中显示订阅对象
-        this.updateSubNotifier(ctx)
+        // this.updateSubNotifier(ctx)
     }
 
     unsubSingle(ctx: Context, id: string /* UID或RoomId */, type: number /* 0取消Live订阅，1取消Dynamic订阅 */): string {
-        let index: number
+        // let index: number
 
-        const checkIfNoSubExist = (index: number) => {
-            if (!this.subManager[index].dynamic && !this.subManager[index].live) {
-                // 获取要删除行的id
-                const id = this.subManager[index].id
-                // 从管理对象中移除
-                this.subManager.splice(index, 1)
-                // 从数据库中删除
-                ctx.database.remove('bilibili', [id])
-                // num--
-                this.num--
-                return '已取消订阅该用户'
-            }
-            return null
-        }
+        // const checkIfNoSubExist = (index: number) => {
+        //     if (!this.subManager[index].dynamic && !this.subManager[index].live) {
+        //         // 获取要删除行的id
+        //         const id = this.subManager[index].id
+        //         // 从管理对象中移除
+        //         this.subManager.splice(index, 1)
+        //         // 从数据库中删除
+        //         ctx.database.remove('bilibili', [id])
+        //         // num--
+        //         this.num--
+        //         return '已取消订阅该用户'
+        //     }
+        //     return null
+        // }
 
-        try {
-            switch (type) {
-                case 0: { // 取消Live订阅
-                    index = this.subManager.findIndex(sub => sub.roomId === id)
-                    if (index === -1) return '未订阅该用户，无需取消订阅'
-                    // 取消订阅
-                    this.subManager[index].live && this.subManager[index].liveDispose()
-                    this.subManager[index].liveDispose = null
-                    this.subManager[index].live = false
-                    // 如果没有对这个UP的任何订阅，则移除
-                    const info = checkIfNoSubExist(index)
-                    if (info) return info
-                    // 更新数据库
-                    ctx.database.upsert('bilibili', [{
-                        id: +`${this.subManager[index].id}`,
-                        live: 0
-                    }])
-                    return '已取消订阅Live'
-                }
-                case 1: { // 取消Dynamic订阅
-                    index = this.subManager.findIndex(sub => sub.uid === id)
-                    if (index === -1) return '未订阅该用户，无需取消订阅'
-                    // 取消订阅
-                    this.subManager[index].dynamic && this.subManager[index].dynamicDispose()
-                    this.subManager[index].dynamicDispose = null
-                    this.subManager[index].dynamic = false
-                    // 如果没有对这个UP的任何订阅，则移除
-                    const info = checkIfNoSubExist(index)
-                    if (info) return info
-                    // 更新数据库
-                    ctx.database.upsert('bilibili', [{
-                        id: +`${this.subManager[index].id}`,
-                        dynamic: 0
-                    }])
-                    return '已取消订阅Dynamic'
-                }
-            }
-        } finally {
-            // 执行完该方法后，保证执行一次updateSubNotifier()
-            this.updateSubNotifier(ctx)
-        }
+        // try {
+        //     switch (type) {
+        //         case 0: { // 取消Live订阅
+        //             index = this.subManager.findIndex(sub => sub.roomId === id)
+        //             if (index === -1) return '未订阅该用户，无需取消订阅'
+        //             // 取消订阅
+        //             this.subManager[index].live && this.subManager[index].liveDispose()
+        //             this.subManager[index].liveDispose = null
+        //             this.subManager[index].live = false
+        //             // 如果没有对这个UP的任何订阅，则移除
+        //             const info = checkIfNoSubExist(index)
+        //             if (info) return info
+        //             // 更新数据库
+        //             ctx.database.upsert('bilibili', [{
+        //                 id: +`${this.subManager[index].id}`,
+        //                 live: 0
+        //             }])
+        //             return '已取消订阅Live'
+        //         }
+        //         case 1: { // 取消Dynamic订阅
+        //             index = this.subManager.findIndex(sub => sub.uid === id)
+        //             if (index === -1) return '未订阅该用户，无需取消订阅'
+        //             // 取消订阅
+        //             this.subManager[index].dynamic && this.subManager[index].dynamicDispose()
+        //             this.subManager[index].dynamicDispose = null
+        //             this.subManager[index].dynamic = false
+        //             // 如果没有对这个UP的任何订阅，则移除
+        //             const info = checkIfNoSubExist(index)
+        //             if (info) return info
+        //             // 更新数据库
+        //             ctx.database.upsert('bilibili', [{
+        //                 id: +`${this.subManager[index].id}`,
+        //                 dynamic: 0
+        //             }])
+        //             return '已取消订阅Dynamic'
+        //         }
+        //     }
+        // } finally {
+        //     // 执行完该方法后，保证执行一次updateSubNotifier()
+        //     this.updateSubNotifier(ctx)
+        // }
+        return ""
     }
 
     unsubAll(ctx: Context, bot: Bot<Context>, uid: string) {
-        this.subManager.filter(sub => sub.uid === uid).map(async (sub, i) => {
-            // 取消全部订阅 执行dispose方法，销毁定时器
-            if (sub.dynamic) this.subManager[i].dynamicDispose()
-            if (sub.live) this.subManager[i].liveDispose()
-            // 从数据库中删除订阅
-            await ctx.database.remove('bilibili', { uid: this.subManager[i].uid })
-            // 将该订阅对象从订阅管理对象中移除
-            this.subManager.splice(i, 1)
-            // id--
-            this.num--
-            // 发送成功通知
-            this.sendPrivateMsg(bot, `UID:${uid}，已取消订阅该用户`)
-            // 更新控制台提示
-            this.updateSubNotifier(ctx)
-        })
+        // this.subManager.filter(sub => sub.uid === uid).map(async (sub, i) => {
+        //     // 取消全部订阅 执行dispose方法，销毁定时器
+        //     if (sub.dynamic) this.subManager[i].dynamicDispose()
+        //     if (sub.live) this.subManager[i].liveDispose()
+        //     // 从数据库中删除订阅
+        //     await ctx.database.remove('bilibili', { uid: this.subManager[i].uid })
+        //     // 将该订阅对象从订阅管理对象中移除
+        //     this.subManager.splice(i, 1)
+        //     // id--
+        //     this.num--
+        //     // 发送成功通知
+        //     this.sendToMaster(ctx, `UID:${uid}，已取消订阅该用户`)
+        //     // 更新控制台提示
+        //     this.updateSubNotifier(ctx)
+        // })
     }
 
     async checkIfIsLogin(ctx: Context) {
@@ -1656,49 +1479,96 @@ namespace ComRegister {
     export interface Config {
         master: {
             enable: boolean
-            masterAccount: string,
-            masterAccountGuildId: string
+            masterAccount: string
         },
-        unlockSubLimits: boolean,
         liveStartAtAll: boolean,
-        pushTime: number,
         liveLoopTime: number,
         customLiveStart: string,
         customLiveEnd: string,
         dynamicUrl: boolean,
         dynamicLoopTime: number,
-        dynamicCheckNumber: number,
         filter: {
             enable: boolean,
             notify: boolean
             regex: string,
             keywords: Array<string>,
         },
-        dynamicDebugMode: boolean
+        dynamicDebugMode: boolean,
+        commandDebug: boolean,
+        dynamicSection: {},
+        liveSection: {},
+        debugSection: {},
     }
 
     export const Config: Schema<Config> = Schema.object({
-        master: Schema.object({
-            enable: Schema.boolean(),
-            masterAccount: Schema.string(),
-            masterAccountGuildId: Schema.string()
-        }),
-        unlockSubLimits: Schema.boolean().required(),
-        liveStartAtAll: Schema.boolean().required(),
-        pushTime: Schema.number().required(),
-        liveLoopTime: Schema.number().default(10),
-        customLiveStart: Schema.string().required(),
-        customLiveEnd: Schema.string().required(),
-        dynamicUrl: Schema.boolean().required(),
-        dynamicLoopTime: Schema.number().default(60),
-        dynamicCheckNumber: Schema.number().required(),
-        filter: Schema.object({
-            enable: Schema.boolean(),
-            notify: Schema.boolean(),
-            regex: Schema.string(),
-            keywords: Schema.array(String),
-        }),
-        dynamicDebugMode: Schema.boolean().required()
+        
+        master: Schema.intersect([
+            Schema.object({
+                enable: Schema.boolean()
+                    .default(false)
+                    .description('是否开启主人账号功能，如果您的机器人没有私聊权限请不要开启此功能。开启后如果机器人运行错误会向您进行报告')
+                    .experimental()
+            }).description('主人账号'),
+            Schema.union([
+                Schema.object({
+                    masterAccount: Schema.string()
+                        .role('secret')
+                        .default('')
+                        .description('主人账号，在Q群使用可直接使用QQ号，若在其他平台使用，请使用inspect插件获取自身ID'),
+                    masterAccountGuildId: Schema.string()
+                        .role('secret')
+                        .description('主人账号所在的群组ID，只有在QQ频道、Discord这样的环境才需要填写，请使用inspect插件获取群组ID'),
+                })
+            ])
+        ]),
+
+        dynamicSection: Schema.object({}).description('动态通知设置'),
+        dynamicUrl: Schema.boolean()
+            .default(false)
+            .description('发送动态时是否同时发送链接。注意：如果使用的是QQ官方机器人不能开启此项！'),
+        dynamicLoopTime: Schema.number().default(120)
+            .description('设定多久检测一次动态，单位为秒。默认值为2分钟'),
+        
+        filter: Schema.intersect([
+            Schema.object({
+                enable: Schema.boolean()
+                    .default(false)
+                    .description('是否开启动态屏蔽功能')
+            }).description('屏蔽设置'),
+            Schema.object({
+                notify: Schema.boolean()
+                    .default(false)
+                    .description('动态被屏蔽是否发送提示'),
+                regex: Schema.string()
+                    .description('正则表达式屏蔽'),
+                keywords: Schema.array(String)
+                    .description('关键字屏蔽，一个关键字为一项'),
+                forward: Schema.boolean()
+                    .default(false)
+                    .description("是否屏蔽转发动态"),
+            }),
+        ]),
+
+        liveSection: Schema.object({}).description('直播通知设置'),
+        liveStartAtAll: Schema.boolean()
+            .default(false)
+            .description('直播开始时艾特全体成员，默认关闭'),
+        liveLoopTime: Schema.number().default(120)
+            .description('设定多久检测一次直播，单位为秒。默认值为2分钟'),
+        customLiveStart: Schema.string()
+            .default('-name开播啦 -link')
+            .description('自定义开播提示语，-name代表UP昵称，-link代表直播间链接（如果使用的是QQ官方机器人，请不要使用）。例如-name开播啦，会发送为xxxUP开播啦'),
+        
+        customLiveEnd: Schema.string()
+            .default('-name下播啦，本次直播了-time')
+            .description('自定义下播提示语，-name代表UP昵称，-time代表开播时长。例如-name下播啦，本次直播了-time，会发送为xxxUP下播啦，直播时长为xx小时xx分钟xx秒'),
+
+        debugSection: Schema.object({}).description('调试设置'),
+        dynamicDebugMode: Schema.boolean()
+            .default(false)
+            .description('动态调试模式，开启后会在控制台输出动态推送的详细信息')
+            .experimental(),
+        commandDebug: Schema.boolean().default(false).description('调试指令开关，开启后将添加系列调试命令').experimental(),
     })
 }
 

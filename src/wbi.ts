@@ -111,7 +111,9 @@ namespace Wbi {
     export const Config: Schema<Config> = Schema.object({
         key: Schema.string()
             .pattern(/^[0-9a-f]{32}$/)
+            .role('secret')
             .required()
+            .description('请输入一个32位小写字母的十六进制密钥（例如：9b8db7ae562b9864efefe06289cc5530），使用此密钥将你的B站登录信息存储在数据库中，请一定保存好此密钥。如果你忘记了此密钥，必须重新登录。你可以自行生成，或到这个网站生成：https://www.sexauth.com/')
     })
 }
 

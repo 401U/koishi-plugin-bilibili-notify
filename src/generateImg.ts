@@ -207,7 +207,7 @@ class GenerateImg extends Service {
         for (let i = 0; i < attempts; i++) {
             try {
                 // 判断渲染方式
-                if (this.giConfig.renderType) { // 为1则为真，进入page模式
+                if (this.giConfig.renderType==='page') { // 为1则为真，进入page模式
                     const htmlPath = 'file://' + __dirname.replaceAll('\\', '/') + '/page/0.html';
                     const page = await this.ctx.puppeteer.page()
                     await page.goto(htmlPath)
@@ -280,17 +280,17 @@ class GenerateImg extends Service {
                         }
                     }, '');
                     // 关键字和正则屏蔽
-                    if (this.giConfig.filter.enable) { // 开启动态屏蔽功能
-                        if (this.giConfig.filter.regex) { // 正则屏蔽
-                            const reg = new RegExp(this.giConfig.filter.regex)
-                            if (reg.test(richText)) throw new Error('出现关键词，屏蔽该动态')
-                        }
-                        if (this.giConfig.filter.keywords.length !== 0 &&
-                            this.giConfig.filter.keywords
-                                .some(keyword => richText.includes(keyword))) {
-                            throw new Error('出现关键词，屏蔽该动态')
-                        }
-                    }
+                    // if (this.giConfig.filter.enable) { // 开启动态屏蔽功能
+                    //     if (this.giConfig.filter.regex) { // 正则屏蔽
+                    //         const reg = new RegExp(this.giConfig.filter.regex)
+                    //         if (reg.test(richText)) throw new Error('出现关键词，屏蔽该动态')
+                    //     }
+                    //     if (this.giConfig.filter.keywords.length !== 0 &&
+                    //         this.giConfig.filter.keywords
+                    //             .some(keyword => richText.includes(keyword))) {
+                    //         throw new Error('出现关键词，屏蔽该动态')
+                    //     }
+                    // }
                     // 查找\n
                     const text = richText.replace(/\n/g, '<br>');
                     // 拼接字符串
@@ -337,9 +337,9 @@ class GenerateImg extends Service {
                     // 转发动态
                     if (dynamicMajorData.type === DYNAMIC_TYPE_FORWARD) {
                         //转发动态屏蔽
-                        if (this.giConfig.filter.enable && this.giConfig.filter.forward) {
-                            throw new Error('已屏蔽转发动态')
-                        }
+                        // if (this.giConfig.filter.enable && this.giConfig.filter.forward) {
+                        //     throw new Error('已屏蔽转发动态')
+                        // }
                         // User info
                         const forward_module_author = dynamicMajorData.orig.modules.module_author
                         const forwardUserAvatarUrl = forward_module_author.face
@@ -1299,7 +1299,7 @@ class GenerateImg extends Service {
         for (let i = 0; i < attempts; i++) {
             try {
                 // 判断渲染方式
-                if (this.giConfig.renderType) { // 为1则为真，进入page模式
+                if (this.giConfig.renderType==='page') { // 为1则为真，进入page模式
                     const htmlPath = 'file://' + __dirname.replaceAll('\\', '/') + '/page/0.html';
                     const page = await this.ctx.puppeteer.page()
                     await page.goto(htmlPath)
@@ -1391,14 +1391,7 @@ class GenerateImg extends Service {
 
 namespace GenerateImg {
     export interface Config {
-        renderType: number,
-        filter: {
-            enable: boolean,
-            notify: boolean,
-            regex: string,
-            keywords: Array<string>,
-            forward: boolean
-        }
+        renderType: 'render' | 'page',
         removeBorder: boolean,
         cardColorStart: string,
         cardColorEnd: string,
@@ -1407,19 +1400,30 @@ namespace GenerateImg {
     }
 
     export const Config: Schema<Config> = Schema.object({
-        renderType: Schema.number(),
-        filter: Schema.object({
-            enable: Schema.boolean(),
-            notify: Schema.boolean(),
-            regex: Schema.string(),
-            keywords: Schema.array(String),
-            forward: Schema.boolean()
-        }),
-        removeBorder: Schema.boolean(),
-        cardColorStart: Schema.string(),
-        cardColorEnd: Schema.string(),
-        enableLargeFont: Schema.boolean(),
+        renderType: Schema.union(['render', 'page'])
+            .role('')
+            .default('render')
+            .description('渲染类型，默认为render模式，渲染速度更快，但会出现乱码问题，若出现乱码问题，请切换到page模式。若使用自定义字体，建议选择render模式'),
+    
+        removeBorder: Schema.boolean()
+            .default(false)
+            .description('移除推送卡片边框'),
+        cardColorStart: Schema.string()
+            .pattern(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+            .default('#F38AB5')
+            .description('推送卡片的开始渐变背景色，请填入16进制颜色代码，参考网站：https://webkul.github.io/coolhue/'),
+
+        cardColorEnd: Schema.string()
+            .pattern(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+            .default('#F9CCDF')
+            .description('推送卡片的结束渐变背景色，请填入16进制颜色代码，参考网站：https://colorate.azurewebsites.net/'),
+
+        enableLargeFont: Schema.boolean()
+            .default(false)
+            .description('是否开启动态推送卡片大字体模式，默认为小字体。小字体更漂亮，但阅读比较吃力，大字体更易阅读，但相对没这么好看'),
+
         font: Schema.string()
+            .description('推送卡片的字体样式，如果你想用你自己的字体可以在此填写，例如：Microsoft YaHei'),
     })
 }
 

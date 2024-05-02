@@ -2,22 +2,26 @@ import { Context } from "koishi"
 
 declare module 'koishi' {
     interface Tables {
-        bilibili: Bilibili,
-        loginBili: LoginBili
+        bili_user: BiliUser,
+        loginBili: LoginBili,
+        bili_sub: BiliSub
     }
 }
 
-export interface Bilibili {
-    id: number,
+export interface BiliUser {
     uid: string,
     room_id: string,
-    dynamic: number,
-    video: number,
-    live: number,
-    targetId: string,
-    platform: string,
     time: Date
 }
+
+export interface BiliSub{
+    uid: string,
+    live: number,
+    dynamic: number,
+    filter: string,
+    channel: string
+}
+
 
 export interface LoginBili {
     id: number,
@@ -35,16 +39,18 @@ export function apply(ctx: Context) {
         bili_refresh_token: 'text'
     })
 
-    // 新增Bilibili表
-    ctx.model.extend('bilibili', {
-        id: 'unsigned',
+    // 新增BiliUser表
+    ctx.model.extend('bili_user', {
         uid: 'string',
         room_id: 'string',
-        dynamic: 'unsigned',
-        video: 'unsigned',
-        live: 'unsigned',
-        targetId: 'string',
-        platform: 'string',
         time: 'timestamp'
-    }, { autoInc: true })
+    }, {unique: ['uid']})
+    // 新增BiliSub表
+    ctx.model.extend('bili_sub', {
+        uid: 'string',
+        channel: 'string',
+        live: 'unsigned',
+        dynamic: 'unsigned',
+        filter: 'string'
+    }, {primary: ['uid', 'channel']})
 }

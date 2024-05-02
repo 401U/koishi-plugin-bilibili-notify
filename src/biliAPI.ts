@@ -1,5 +1,5 @@
 import { Context, Schema, Service } from "koishi"
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { CookieJar, Cookie } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
 import { JSDOM } from 'jsdom'
@@ -15,7 +15,7 @@ declare module 'koishi' {
 // 在getUserInfo中检测到番剧出差的UID时，要传回的数据：
 const bangumiTripData = { "code": 0, "data": { "live_room": { "roomid": 931774 } } }
 
-// const GET_DYNAMIC_LIST = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all'
+const GET_DYNAMIC_LIST = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all'
 const GET_USER_SPACE_DYNAMIC_LIST = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
 const GET_COOKIES_INFO = 'https://passport.bilibili.com/x/passport-login/web/cookie/info'
 const GET_USER_INFO = 'https://api.bilibili.com/x/space/wbi/acc/info'
@@ -31,7 +31,7 @@ class BiliAPI extends Service {
     static inject = ['database', 'wbi', 'notifier']
 
     jar: CookieJar
-    client: any
+    client: AxiosInstance
     apiConfig: BiliAPI.Config
     loginData: any
     loginNotifier: Notifier
@@ -69,6 +69,15 @@ class BiliAPI extends Service {
             }
         } catch (e) {
             throw new Error('网络异常，本次请求失败！');
+        }
+    }
+
+    async getDynamicList() {
+        try {
+            const { data } = await this.client.get(GET_DYNAMIC_LIST)
+            return data
+        } catch (e) {
+            throw new Error('网络异常，本次请求失败！')
         }
     }
 
@@ -424,6 +433,8 @@ namespace BiliAPI {
 
     export const Config: Schema<Config> = Schema.object({
         userAgent: Schema.string()
+            .default('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36')
+            .description('设置请求头User-Agen，请求出现-352时可以尝试修改')
     })
 }
 
