@@ -238,7 +238,7 @@ class GenerateImg extends Service {
         }
     }
 
-    async generateDynamicImg(data: any) {
+    async generateDynamicImg(data: DynamicItem) {
         // module_author
         const module_author = data.modules.module_author
         const avatarUrl = module_author.face
@@ -261,7 +261,7 @@ class GenerateImg extends Service {
         // TOPIC
         const topic = data.modules.module_dynamic.topic ? data.modules.module_dynamic.topic.name : ''
 
-        const getDynamicMajor = async (dynamicMajorData: any, forward: boolean): Promise<[string, string, string?]> => {
+        const getDynamicMajor = async (dynamicMajorData: DynamicItem, forward: boolean): Promise<[string, string, string?]> => {
             // 定义返回值
             let main: string = ''
             let link: string = ''

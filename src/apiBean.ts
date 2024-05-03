@@ -60,6 +60,10 @@ interface Pagination<T>{
 //     visible: true
 //   }
 
+interface TextHolder{
+    text: string
+}
+
 interface DynamicItem{
     basic: any
     id_str: string
@@ -70,8 +74,78 @@ interface DynamicItem{
             avatar: string
             official_verify: any
             pub_ts: number
+            face: string
+            decorate: {
+                card_url: string
+                fan: {
+                    num_str: number
+                    color: string
+                }
+            }
+            vip: {
+                type: number
+            }
         }
-        module_dynamic: {}
+        module_dynamic: {
+            topic: {
+                name: string
+            }
+            desc: {
+                rich_text_nodes: DynamicItemRichTextNode[]
+            }
+            major: {
+                draw:{
+                    items: DynamicItemDrawItem[]
+                }
+                archive: {
+                    badge: TextHolder
+                    cover: string
+                    duration_text: string
+                    title: string
+                    desc: string
+                    stat: {
+                        play: string
+                        danmaku: string
+                    }
+                    bvid: string
+                }
+            }
+            additional: {
+                type: string
+                reserve: {
+                    button: {
+                        uncheck: TextHolder
+                    }
+                    title: string
+                    desc1: TextHolder
+                    desc2: TextHolder
+                    desc3: TextHolder
+                }
+            }
+        }
+        module_stat: {
+            comment: {
+                count: number
+            }
+            forward: {
+                count: number
+            }
+            like: {
+                count: number
+            }
+        }
     }
     type: string
+    orig: DynamicItem
+}
+
+interface DynamicItemRichTextNode{
+    emoji: {
+        icon_url: string
+    }
+    text: string
+}
+
+interface DynamicItemDrawItem{
+    src: string
 }
