@@ -6,19 +6,20 @@ import QRCode from 'qrcode'
 import Jimp from 'jimp'
 import {} from 'koishi-plugin-cron'
 
+
 class ComRegister {
     static inject = ['ba', 'gi', 'wbi', 'database', 'sm', 'cron'];
     logger: Logger;
     config: ComRegister.Config
     loginTimer: Function
     subNotifier: Notifier
+    num: number
     /**
      * 关注分组
      */
     followGroup: number
 
     constructor(ctx: Context, config: ComRegister.Config) {
-        this.logger.info('开始加载')
         this.logger = ctx.logger('BiliCmd')
         this.config = config
         this.logger.info('开始加载')
@@ -28,18 +29,18 @@ class ComRegister {
             this.setupFollowGroup(ctx)
         })
 
-        this.logger.info('数据库与分组加载j完毕')
+        this.logger.debug('数据库与分组加载完毕')
         this.initBiliCmd(ctx)
-        this.logger.info('bili指令加载完毕')
+        this.logger.debug('bili指令加载完毕')
         if(config.commandDebug) this.registerDebugCommand(ctx)
         ctx.cron(config.dynamicCheckCron, () => {
-            this.logger.info('动态监测开始')
+            this.logger.debug('动态监测开始')
             this.checkDynamic(ctx)
         })
         ctx.cron(config.liveCheckCron, () => {
-            this.logger.info('直播监测开始')
+            this.logger.debug('直播监测开始')
         })
-        this.logger.info('cron任务加载完毕')
+        this.logger.debug('cron任务加载完毕')
     }
 
     /**
@@ -85,7 +86,7 @@ class ComRegister {
                 })
             })
 
-            this.logger.info(`动态总数：${num_total} 新动态数：${num_new} 关注用户动态数：${num_followed} 发送动态数：${num_sent}`)
+            this.logger.debug(`动态总数：${num_total} 新动态数：${num_new} 关注用户动态数：${num_followed} 发送动态数：${num_sent}`)
             let endTime = new Date()
             await ctx.database.set('bili_check', {
                 id: checkId

@@ -1,4 +1,4 @@
-import { Context, Schema, Service } from "koishi"
+import { Context, Logger, Schema, Service } from "koishi"
 import axios, { AxiosInstance } from 'axios'
 import { CookieJar, Cookie } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
@@ -47,9 +47,11 @@ class BiliAPI extends Service {
     loginNotifier: Notifier
     refreshCookieTimer: Function
     loginInfoIsLoaded: boolean = false
+    log: Logger
 
     constructor(ctx: Context, config: BiliAPI.Config) {
         super(ctx, 'ba')
+        this.log = ctx.logger('BiliAPI')
         this.apiConfig = config
     }
 
@@ -63,19 +65,13 @@ class BiliAPI extends Service {
     }
 
     protected async get(url: string) {
-        if(this.apiConfig.debugMode) {
-            console.log(`>>>>>>>>>> Sending GET to: ${url}`)
-        }
+        this.log.debug(`>>>>>>>>>> Sending GET to: ${url}`)
         try {
             const {data} = await this.client.get(url)
-            if(this.apiConfig.debugMode) {
-                console.log(`<<<<<<<<<< Received response:\n`, data)
-            }
+            this.log.debug(`<<<<<<<<<< Received response:\n`, data)
             return data
         } catch (e) {
-            if (this.apiConfig.debugMode) {
-                console.error(`<<<<<<<<<< Received error:\n`, e)
-            }
+            this.log.error(`<<<<<<<<<< Received error:\n`, e)
             throw new Error('网络异常，本次请求失败！')
         }
     }
@@ -114,18 +110,13 @@ class BiliAPI extends Service {
             re_src: 11,
             csrf: jct
         }
-        if(this.apiConfig.debugMode){
-            console.log(`>>>>>>>>>> Sending POST request to: ${FOLLOW}\n`, payload)
-        }
-        const {data} = await this.client.post(FOLLOW, payload, 
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                }
-            })
-        if(this.apiConfig.debugMode){
-            console.log(`<<<<<<<<<< Received response:\n`, data)
-        }
+        this.log.debug(`>>>>>>>>>> Sending POST request to: ${FOLLOW}\n`, payload)
+        const {data} = await this.client.post(FOLLOW, payload, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        })
+        this.log.debug(`<<<<<<<<<< Received response:\n`, data)
         return data
     }
 
@@ -150,17 +141,13 @@ class BiliAPI extends Service {
             tag: name,
             csrf: jct
         }
-        if(this.apiConfig.debugMode){
-            console.log(`>>>>>>>>>> Sending POST request to: ${CREATE_GROUP}\n`, payload)
-        }
+        this.log.debug(`>>>>>>>>>> Sending POST request to: ${CREATE_GROUP}\n`, payload)
         const {data} = await this.client.post(CREATE_GROUP, payload,{
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
         })
-        if(this.apiConfig.debugMode){
-            console.log(`<<<<<<<<<< Received response:\n`, data)
-        }
+        this.log.debug(`<<<<<<<<<< Received response:\n`, data)
         return data as BiliResp<FollowGroup>
     }
 
@@ -174,17 +161,13 @@ class BiliAPI extends Service {
             tagids: gid.join(','),
             csrf: jct
         }
-        if(this.apiConfig.debugMode){
-            console.log(`>>>>>>>>>> Sending POST request to: ${COPY_TO_GROUP}\n`, payload)
-        }
+        this.log.debug(`>>>>>>>>>> Sending POST request to: ${COPY_TO_GROUP}\n`, payload)
         const {data} = await this.client.post(COPY_TO_GROUP, payload,{
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
         })
-        if(this.apiConfig.debugMode){
-            console.log(`<<<<<<<<<< Received response:\n`, data)
-        }
+        this.log.debug(`<<<<<<<<<< Received response:\n`, data)
         return data
     }
 
@@ -198,16 +181,12 @@ class BiliAPI extends Service {
             tagids: gid.join(','),
             csrf: jct
         }
-        if(this.apiConfig.debugMode){
-            console.log(`>>>>>>>>>> Sending POST request to: ${ADD_TO_GROUP}\n`, payload)
-        }
+        this.log.debug(`>>>>>>>>>> Sending POST request to: ${ADD_TO_GROUP}\n`, payload)
         const {data} = await this.client.post(ADD_TO_GROUP, payload,{
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
         }})
-        if(this.apiConfig.debugMode){
-            console.log(`<<<<<<<<<< Received response:\n`, data)
-        }
+        this.log.debug(`<<<<<<<<<< Received response:\n`, data)
         return data
     }
 
@@ -235,7 +214,7 @@ class BiliAPI extends Service {
     async getUserInfo(mid: number) {
         //如果为番剧出差的UID，则不从远程接口拉取数据，直接传回一段精简过的有效数据
         if (mid === 11783021) {
-            console.log("检测到番剧出差UID，跳过远程用户接口访问")
+            this.log.debug("检测到番剧出差UID，跳过远程用户接口访问")
             return bangumiTripData
         }
         const wbi = await this.ctx.wbi.getWbi({ mid })
@@ -458,7 +437,7 @@ class BiliAPI extends Service {
         const targetElement = document.getElementById('1-name');
         const refresh_csrf = targetElement ? targetElement.textContent : null;
         // 发送刷新请求
-        if(this.apiConfig.debugMode) console.log(`>>>>>>>>>> Sending POST to: https://passport.bilibili.com/x/passport-login/web/cookie/refresh`)
+        this.log.debug(`>>>>>>>>>> Sending POST to: https://passport.bilibili.com/x/passport-login/web/cookie/refresh`)
         const { data: refreshData } = await this.client.post(
             'https://passport.bilibili.com/x/passport-login/web/cookie/refresh',
             {
@@ -473,7 +452,7 @@ class BiliAPI extends Service {
                 }
             }
         )
-        if (this.apiConfig.debugMode) console.log(`>>>>>>>>>> Received data: \n`, refreshData)
+        this.log.debug(`>>>>>>>>>> Received data: \n`, refreshData)
         // 检查是否有其他问题
         switch (refreshData.code) {
             // 账号未登录
@@ -500,7 +479,7 @@ class BiliAPI extends Service {
             if (cookie.key === 'bili_jct') return true
         }).value
         // Accept update
-        if (this.apiConfig.debugMode) console.log(`>>>>>>>>>> Sending POST to: https://passport.bilibili.com/x/passport-login/web/confirm/refresh`)
+        this.log.debug(`>>>>>>>>>> Sending POST to: https://passport.bilibili.com/x/passport-login/web/confirm/refresh`)
         const { data: aceeptData } = await this.client.post(
             'https://passport.bilibili.com/x/passport-login/web/confirm/refresh',
             {
@@ -511,7 +490,7 @@ class BiliAPI extends Service {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
         })
-        if (this.apiConfig.debugMode) console.log(`>>>>>>>>>> Received data: \n`, aceeptData)
+        this.log.debug(`>>>>>>>>>> Received data: \n`, aceeptData)
         // 检查是否有其他问题
         switch (aceeptData.code) {
             case -111: {
@@ -526,15 +505,13 @@ class BiliAPI extends Service {
 
 namespace BiliAPI {
     export interface Config {
-        userAgent: string,
-        debugMode: boolean
+        userAgent: string
     }
 
     export const Config: Schema<Config> = Schema.object({
         userAgent: Schema.string()
             .default('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36')
             .description('设置请求头User-Agen，请求出现-352时可以尝试修改'),
-        debugMode: Schema.boolean().default(false).description('开启调试模式，会输出网络请求信息').experimental(),
     })
 }
 

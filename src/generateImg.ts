@@ -48,7 +48,7 @@ class GenerateImg extends Service {
     giConfig: GenerateImg.Config
 
     constructor(ctx: Context, config: GenerateImg.Config) {
-        super(ctx, 'BiliImg')
+        super(ctx, 'gi')
         this.giConfig = config
     }
 
