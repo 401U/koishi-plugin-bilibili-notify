@@ -71,7 +71,7 @@ class BiliAPI extends Service {
             if(this.apiConfig.debugMode) {
                 console.log(`<<<<<<<<<< Received response:\n`, data)
             }
-            return data as BiliResp<any>
+            return data
         } catch (e) {
             if (this.apiConfig.debugMode) {
                 console.error(`<<<<<<<<<< Received error:\n`, e)
@@ -85,7 +85,7 @@ class BiliAPI extends Service {
 
     async getServerUTCTime() {
         try {
-            const data  = await this.get(GET_SERVER_UTC_TIME);
+            const data  = await this.get(GET_SERVER_UTC_TIME)
             const regex = /Date\.UTC\((.*?)\)/;
             const match = data.match(regex);
             if (match) {
@@ -99,11 +99,11 @@ class BiliAPI extends Service {
         }
     }
 
-    async checkFollow(uid: string){
+    async checkFollow(uid: number){
         return await this.get(`${IS_FOLLOW}?fid=${uid}`) as BiliResp<IsFollow>
     }
 
-    private async setFollowRelation(uid: string, act: number) {
+    private async setFollowRelation(uid: number, act: number) {
         const { cookies } = await this.getLoginInfoFromDB()
         let jct = cookies.find(cookie => {
             return cookie.key === "bili_jct"
@@ -129,11 +129,11 @@ class BiliAPI extends Service {
         return data
     }
 
-    async followUser(uid: string) {
+    async followUser(uid: number) {
         return await this.setFollowRelation(uid, 1)
     }
 
-    async unfollowUser(uid: string) {
+    async unfollowUser(uid: number) {
         return await this.setFollowRelation(uid, 2)
     }
 
@@ -216,7 +216,7 @@ class BiliAPI extends Service {
     }
 
     async getDynamicList() {
-        return await this.get(GET_DYNAMIC_LIST)
+        return await this.get(GET_DYNAMIC_LIST) as BiliResp<Pagination<DynamicItem>>
     }
 
     async getTimeNow() {

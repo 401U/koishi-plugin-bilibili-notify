@@ -5,6 +5,7 @@ declare module 'koishi' {
         bili_user: BiliUser,
         loginBili: LoginBili,
         bili_sub: BiliSub
+        bili_check: BiliCheck
     }
 }
 
@@ -23,6 +24,16 @@ export interface BiliSub{
     time: Date,
 }
 
+export interface BiliCheck{
+    id: number
+    startTime: Date
+    endTime: Date
+    num_total: number
+    num_followed: number
+    num_filtered: number
+    num_sent: number
+}
+
 
 export interface LoginBili {
     id: number,
@@ -33,13 +44,14 @@ export interface LoginBili {
 export const name = 'Database'
 
 export function apply(ctx: Context) {
+    let logger = ctx.logger('BiliDB')
     // 新增LoginBili表
     ctx.model.extend('loginBili', {
         id: 'unsigned',
         bili_cookies: 'text',
         bili_refresh_token: 'text'
     })
-    ctx.logger.info('扩展LoginBili表成功')
+    logger.info('扩展LoginBili表成功')
 
     // 新增BiliUser表
     ctx.model.extend('bili_user', {
@@ -47,7 +59,7 @@ export function apply(ctx: Context) {
         uname: 'string',
         room_id: 'string'
     }, {unique: ['uid'], primary: 'uid'})
-    ctx.logger.info('扩展BiliUser表成功')
+    logger.info('扩展BiliUser表成功')
     // 新增BiliSub表
     ctx.model.extend('bili_sub', {
         uid: 'unsigned',
@@ -57,5 +69,15 @@ export function apply(ctx: Context) {
         filter: 'string',
         time: 'timestamp'
     }, {primary: ["uid", "channel"]})
-    ctx.logger.info('扩展BiliSub表成功')
+    logger.info('扩展BiliSub表成功')
+    ctx.model.extend('bili_check', {
+        id: 'unsigned',
+        startTime: 'timestamp',
+        endTime: 'timestamp',
+        num_total: 'unsigned',
+        num_followed: 'unsigned',
+        num_filtered: 'unsigned',
+        num_sent: 'unsigned'
+    }, {autoInc: true})
+    logger.info('扩展BiliCheck表成功')
 }

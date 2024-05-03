@@ -7,7 +7,7 @@ import Wbi from './wbi'
 import GenerateImg from './generateImg'
 import BiliAPI from './biliAPI'
 
-export const inject = ['puppeteer', 'database', 'notifier']
+export const inject = ['puppeteer', 'database', 'notifier', 'cron']
 
 export const name = 'bilibili-notify'
 
@@ -57,7 +57,7 @@ class ServerManager extends Service {
             .usage('重启插件')
             .example('sys restart')
             .action(async () => {
-                this.logger.info('调用sys restart指令')
+                ctx.logger.info('调用sys restart指令')
                 if (await this.restartPlugin()) {
                     return '插件重启成功'
                 }
@@ -100,9 +100,13 @@ class ServerManager extends Service {
         await new Promise(resolve => {
             // 注册插件
             const ba = this.ctx.plugin(BiliAPI, globalConfig.api)
+            this.ctx.logger.debug('ba已加载')
             const gi = this.ctx.plugin(GenerateImg, globalConfig.generateImage)
+            this.ctx.logger.debug('gi已加载')
             const wbi = this.ctx.plugin(Wbi, globalConfig.wbi)
+            this.ctx.logger.debug('wbi已加载')
             const cr = this.ctx.plugin(ComRegister, globalConfig.main)
+            this.ctx.logger.debug('cr已加载')
             // 添加服务
             this.servers.push(ba)
             this.servers.push(gi)
