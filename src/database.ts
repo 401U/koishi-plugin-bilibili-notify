@@ -9,17 +9,18 @@ declare module 'koishi' {
 }
 
 export interface BiliUser {
-    uid: string,
+    uid: number,
+    uname: string,
     room_id: string,
-    time: Date
 }
 
 export interface BiliSub{
-    uid: string,
+    uid: number,
+    channel: string,
     live: number,
     dynamic: number,
     filter: string,
-    channel: string
+    time: Date,
 }
 
 
@@ -38,19 +39,23 @@ export function apply(ctx: Context) {
         bili_cookies: 'text',
         bili_refresh_token: 'text'
     })
+    ctx.logger.info('扩展LoginBili表成功')
 
     // 新增BiliUser表
     ctx.model.extend('bili_user', {
-        uid: 'string',
-        room_id: 'string',
-        time: 'timestamp'
-    }, {unique: ['uid']})
+        uid: 'unsigned',
+        uname: 'string',
+        room_id: 'string'
+    }, {unique: ['uid'], primary: 'uid'})
+    ctx.logger.info('扩展BiliUser表成功')
     // 新增BiliSub表
     ctx.model.extend('bili_sub', {
-        uid: 'string',
+        uid: 'unsigned',
         channel: 'string',
         live: 'unsigned',
         dynamic: 'unsigned',
-        filter: 'string'
-    }, {primary: ['uid', 'channel']})
+        filter: 'string',
+        time: 'timestamp'
+    }, {primary: ["uid", "channel"]})
+    ctx.logger.info('扩展BiliSub表成功')
 }

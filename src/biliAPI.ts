@@ -27,6 +27,16 @@ const GET_MASTER_INFO = 'https://api.live.bilibili.com/live_user/v1/Master/info'
 const GET_TIME_NOW = 'https://api.bilibili.com/x/report/click/now'
 const GET_SERVER_UTC_TIME = 'https://interface.bilibili.com/serverdate.js'
 
+// Follow
+const IS_FOLLOW = "https://api.bilibili.com/x/relation"
+const FOLLOW = "https://api.bilibili.com/x/relation/modify"
+
+// Group 分组
+const GROUP_LIST = "https://api.bilibili.com/x/relation/tags"
+const CREATE_GROUP = "https://api.bilibili.com/x/relation/tag/create"
+const COPY_TO_GROUP = "https://api.bilibili.com/x/relation/tags/copyUsers"
+const ADD_TO_GROUP = "https://api.bilibili.com/x/relation/tags/addUsers"
+
 class BiliAPI extends Service {
     static inject = ['database', 'wbi', 'notifier']
 
@@ -52,13 +62,30 @@ class BiliAPI extends Service {
         // this.logger.info('工作中')
     }
 
+    protected async get(url: string) {
+        if(this.apiConfig.debugMode) {
+            console.log(`>>>>>>>>>> Sending GET to: ${url}`)
+        }
+        try {
+            const {data} = await this.client.get(url)
+            if(this.apiConfig.debugMode) {
+                console.log(`<<<<<<<<<< Received response:\n`, data)
+            }
+            return data as BiliResp<any>
+        } catch (e) {
+            if (this.apiConfig.debugMode) {
+                console.error(`<<<<<<<<<< Received error:\n`, e)
+            }
+            throw new Error('网络异常，本次请求失败！')
+        }
+    }
     /* protected stop(): void | Promise<void> {
         this.logger.info('已停止工作')
     } */
 
     async getServerUTCTime() {
         try {
-            const { data } = await this.client.get(GET_SERVER_UTC_TIME);
+            const data  = await this.get(GET_SERVER_UTC_TIME);
             const regex = /Date\.UTC\((.*?)\)/;
             const match = data.match(regex);
             if (match) {
@@ -72,101 +99,167 @@ class BiliAPI extends Service {
         }
     }
 
-    async getDynamicList() {
-        try {
-            const { data } = await this.client.get(GET_DYNAMIC_LIST)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
+    async checkFollow(uid: string){
+        return await this.get(`${IS_FOLLOW}?fid=${uid}`) as BiliResp<IsFollow>
+    }
+
+    private async setFollowRelation(uid: string, act: number) {
+        const { cookies } = await this.getLoginInfoFromDB()
+        let jct = cookies.find(cookie => {
+            return cookie.key === "bili_jct"
+        }).value
+        let payload = {
+            fid: uid,
+            act,
+            re_src: 11,
+            csrf: jct
         }
+        if(this.apiConfig.debugMode){
+            console.log(`>>>>>>>>>> Sending POST request to: ${FOLLOW}\n`, payload)
+        }
+        const {data} = await this.client.post(FOLLOW, payload, 
+            {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+        if(this.apiConfig.debugMode){
+            console.log(`<<<<<<<<<< Received response:\n`, data)
+        }
+        return data
+    }
+
+    async followUser(uid: string) {
+        return await this.setFollowRelation(uid, 1)
+    }
+
+    async unfollowUser(uid: string) {
+        return await this.setFollowRelation(uid, 2)
+    }
+
+    async getFollowGroups() {
+        return await this.get(GROUP_LIST) as BiliResp<FollowGroup[]>
+    }
+
+    async createFollowGroup(name: string) {
+        const { cookies } = await this.getLoginInfoFromDB()
+        let jct = cookies.find(cookie => {
+            return cookie.key === "bili_jct"
+        }).value
+        let payload = {
+            tag: name,
+            csrf: jct
+        }
+        if(this.apiConfig.debugMode){
+            console.log(`>>>>>>>>>> Sending POST request to: ${CREATE_GROUP}\n`, payload)
+        }
+        const {data} = await this.client.post(CREATE_GROUP, payload,{
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        })
+        if(this.apiConfig.debugMode){
+            console.log(`<<<<<<<<<< Received response:\n`, data)
+        }
+        return data as BiliResp<FollowGroup>
+    }
+
+    async cpToGroup(uid: number[], gid: number[]) {
+        const { cookies } = await this.getLoginInfoFromDB()
+        let jct = cookies.find(cookie => {
+            return cookie.key === "bili_jct"
+        }).value
+        let payload = {
+            fids: uid.join(','),
+            tagids: gid.join(','),
+            csrf: jct
+        }
+        if(this.apiConfig.debugMode){
+            console.log(`>>>>>>>>>> Sending POST request to: ${COPY_TO_GROUP}\n`, payload)
+        }
+        const {data} = await this.client.post(COPY_TO_GROUP, payload,{
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        })
+        if(this.apiConfig.debugMode){
+            console.log(`<<<<<<<<<< Received response:\n`, data)
+        }
+        return data
+    }
+
+    private async addToGroup(uid: number[], gid: number[]) {
+        const { cookies } = await this.getLoginInfoFromDB()
+        let jct = cookies.find(cookie => {
+            return cookie.key === "bili_jct"
+        }).value
+        let payload = {
+            fids: uid.join(','),
+            tagids: gid.join(','),
+            csrf: jct
+        }
+        if(this.apiConfig.debugMode){
+            console.log(`>>>>>>>>>> Sending POST request to: ${ADD_TO_GROUP}\n`, payload)
+        }
+        const {data} = await this.client.post(ADD_TO_GROUP, payload,{
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+        }})
+        if(this.apiConfig.debugMode){
+            console.log(`<<<<<<<<<< Received response:\n`, data)
+        }
+        return data
+    }
+
+    async delFromGroup(uid: number[]) {
+        this.addToGroup(uid, [0])
+    }
+
+    async getDynamicList() {
+        return await this.get(GET_DYNAMIC_LIST)
     }
 
     async getTimeNow() {
-        try {
-            const { data } = await this.client.get(GET_TIME_NOW)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        return await this.get(GET_TIME_NOW)
     }
 
     async getUserSpaceDynamic(mid: string) {
-        try {
-            const { data } = await this.client.get(`${GET_USER_SPACE_DYNAMIC_LIST}?host_mid=${mid}`)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        return await this.get(`${GET_USER_SPACE_DYNAMIC_LIST}?host_mid=${mid}`)
     }
 
     // Check if Token need refresh
     async getCookieInfo(refreshToken: string) {
-        try {
-            const { data } = await this.client.get(`${GET_COOKIES_INFO}?csrf=${refreshToken}`)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        return await this.get(`${GET_COOKIES_INFO}?csrf=${refreshToken}`)
     }
 
-    async getUserInfo(mid: string) {
+    async getUserInfo(mid: number) {
         //如果为番剧出差的UID，则不从远程接口拉取数据，直接传回一段精简过的有效数据
-        if (mid === "11783021") {
+        if (mid === 11783021) {
             console.log("检测到番剧出差UID，跳过远程用户接口访问")
             return bangumiTripData
         }
-        try {
-            const wbi = await this.ctx.wbi.getWbi({ mid })
-            const { data } = await this.client.get(`${GET_USER_INFO}?${wbi}`)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        const wbi = await this.ctx.wbi.getWbi({ mid })
+        return await this.get(`${GET_USER_INFO}?${wbi}`)
     }
 
     async getMyselfInfo() {
-        try {
-            const { data } = await this.client.get(GET_MYSELF_INFO)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        return await this.get(GET_MYSELF_INFO)
     }
 
     async getLoginQRCode() {
-        try {
-            const { data } = await this.client.get(GET_LOGIN_QRCODE)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        return await this.get(GET_LOGIN_QRCODE)
     }
 
     async getLoginStatus(qrcodeKey: string) {
-        try {
-            const { data } = await this.client.get(`${GET_LOGIN_STATUS}?qrcode_key=${qrcodeKey}`)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        return await this.get(`${GET_LOGIN_STATUS}?qrcode_key=${qrcodeKey}`)
     }
 
     async getLiveRoomInfo(roomId: string) {
-        try {
-            const { data } = await this.client.get(`${GET_LIVE_ROOM_INFO}?room_id=${roomId}`)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+        return await this.get(`${GET_LIVE_ROOM_INFO}?room_id=${roomId}`)
     }
 
-    async getMasterInfo(mid: string) {
-        try {
-            const { data } = await this.client.get(`${GET_MASTER_INFO}?uid=${mid}`)
-            return data
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！')
-        }
+    async getMasterInfo(mid: number) {
+        return await this.get(`${GET_MASTER_INFO}?uid=${mid}`)
     }
 
     disposeNotifier() { this.loginNotifier && this.loginNotifier.dispose() }
@@ -358,13 +451,14 @@ class BiliAPI extends Service {
         const ts = Date.now()
         const correspondPath = await getCorrespondPath(ts)
         // 获取refresh_csrf
-        const { data: refreshCsrfHtml } = await this.client.get(`https://www.bilibili.com/correspond/1/${correspondPath}`)
+        const refreshCsrfHtml = await this.get(`https://www.bilibili.com/correspond/1/${correspondPath}`)
         // 创建一个虚拟的DOM元素
         const { document } = new JSDOM(refreshCsrfHtml).window;
         // 提取标签name为1-name的内容
         const targetElement = document.getElementById('1-name');
         const refresh_csrf = targetElement ? targetElement.textContent : null;
         // 发送刷新请求
+        if(this.apiConfig.debugMode) console.log(`>>>>>>>>>> Sending POST to: https://passport.bilibili.com/x/passport-login/web/cookie/refresh`)
         const { data: refreshData } = await this.client.post(
             'https://passport.bilibili.com/x/passport-login/web/cookie/refresh',
             {
@@ -377,7 +471,9 @@ class BiliAPI extends Service {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 }
-            })
+            }
+        )
+        if (this.apiConfig.debugMode) console.log(`>>>>>>>>>> Received data: \n`, refreshData)
         // 检查是否有其他问题
         switch (refreshData.code) {
             // 账号未登录
@@ -404,6 +500,7 @@ class BiliAPI extends Service {
             if (cookie.key === 'bili_jct') return true
         }).value
         // Accept update
+        if (this.apiConfig.debugMode) console.log(`>>>>>>>>>> Sending POST to: https://passport.bilibili.com/x/passport-login/web/confirm/refresh`)
         const { data: aceeptData } = await this.client.post(
             'https://passport.bilibili.com/x/passport-login/web/confirm/refresh',
             {
@@ -414,6 +511,7 @@ class BiliAPI extends Service {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
         })
+        if (this.apiConfig.debugMode) console.log(`>>>>>>>>>> Received data: \n`, aceeptData)
         // 检查是否有其他问题
         switch (aceeptData.code) {
             case -111: {
@@ -428,13 +526,15 @@ class BiliAPI extends Service {
 
 namespace BiliAPI {
     export interface Config {
-        userAgent: string
+        userAgent: string,
+        debugMode: boolean
     }
 
     export const Config: Schema<Config> = Schema.object({
         userAgent: Schema.string()
             .default('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36')
-            .description('设置请求头User-Agen，请求出现-352时可以尝试修改')
+            .description('设置请求头User-Agen，请求出现-352时可以尝试修改'),
+        debugMode: Schema.boolean().default(false).description('开启调试模式，会输出网络请求信息').experimental(),
     })
 }
 

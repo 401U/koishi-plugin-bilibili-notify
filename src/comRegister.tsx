@@ -1,9 +1,10 @@
-import { Bot, Context, Logger, Schema, Session, h } from "koishi"
+import { $, Bot, Context, Logger, Schema, Session, h } from "koishi"
 import { Notifier } from "@koishijs/plugin-notifier";
 import { } from '@koishijs/plugin-help'
 // 导入qrcode
 import QRCode from 'qrcode'
 import Jimp from 'jimp'
+import { time } from "console";
 
 enum LiveType {
     NotLiveBroadcast,
@@ -18,147 +19,27 @@ class ComRegister {
     loginTimer: Function
     num: number = 0
     subNotifier: Notifier
-    subManager: {
-        id: number,
-        uid: string,
-        roomId: string,
-        targetId: string,
-        platform: string,
-        live: boolean,
-        dynamic: boolean,
-        liveDispose: Function,
-        dynamicDispose: Function
-    }[] = []
+    followGroup: number
 
     static supportedPlatforms= [
         'qq', 'qqguild', 'onebot', 'red', 'telegram', 'satori', 'chronocat'];
 
     constructor(ctx: Context, config: ComRegister.Config) {
         this.logger = ctx.logger('cr')
-        /* ctx.on('ready', () => {
-            this.logger.info('工作中');
-        })
-        ctx.on('dispose', () => {
-            this.logger.info('已停止工作');
-        }) */
         this.config = config
 
         // 从数据库获取订阅
-        this.getSubFromDatabase(ctx)
+        this.getSubFromDatabase(ctx).then(() => {
+            this.setupFollowGroup(ctx)
+        })
 
-        /* const testCom = ctx.command('test', { hidden: true, permissions: ['authority:5'] })
+        this.initBiliCmd(ctx)
+        if(config.commandDebug) this.registerDebugCommand(ctx)
+    }
 
-        testCom.subcommand('.cookies')
-            .usage('测试指令，用于测试从数据库读取cookies')
-            .action(async () => {
-                this.logger.info('调用test cookies指令')
-                // await ctx.ba.loadCookiesFromDatabase()
-                console.log(JSON.parse(ctx.ba.getCookies()));
-            })
-
-        testCom
-            .subcommand('.my')
-            .usage('测试指令，用于测试获取自己信息')
-            .example('test.my')
-            .action(async () => {
-                const content = await ctx.ba.getMyselfInfo()
-                console.log(content);
-            })
-
-        testCom
-            .subcommand('.user <mid:string>')
-            .usage('测试指令，用于测试获取用户信息')
-            .example('test.user 用户UID')
-            .action(async (_, mid) => {
-                const content = await ctx.ba.getUserInfo(mid)
-                console.log(content);
-            })
-
-        testCom
-            .subcommand('.time')
-            .usage('测试时间接口')
-            .example('test.time')
-            .action(async ({ session }) => {
-                session.send(await ctx.ba.getTimeNow())
-            })
-
-        testCom
-            .subcommand('.gimg <uid:string> <index:number>')
-            .usage('测试图片生成')
-            .example('test.gimg')
-            .action(async ({ session }, uid, index) => {
-                // logger
-                this.logger.info('调用test gimg指令')
-                // 获取用户空间动态数据
-                const { data } = await ctx.ba.getUserSpaceDynamic(uid)
-                // 获取动态推送图片
-                const { pic, buffer } = await ctx.gi.generateDynamicImg(data.items[index])
-                // 如果pic存在，则直接返回pic
-                if (pic) return pic
-                // pic不存在，说明使用的是page模式
-                await session.send(h.image(buffer, 'image/png'))
-            })
-
-        testCom
-            .subcommand('.group')
-            .usage('查看session groupId')
-            .example('test group')
-            .action(({ session }) => {
-                console.log(session.event.channel);
-            })
-
-        testCom
-            .subcommand('.session')
-            .usage('查看seesion')
-            .example('test session')
-            .action(({ session }) => {
-                console.log(session);
-            })
-
-        testCom
-            .subcommand('.utc')
-            .usage('获取当前UTC+8 Unix时间戳')
-            .example('test utc')
-            .action(async ({ session }) => {
-                session.send((await ctx.ba.getServerUTCTime()).toString())
-            })
-
-        testCom
-            .subcommand('.livestop', '发送下播提示语测试')
-            .usage('发送下播提示语测试')
-            .example('test livestop')
-            .action(async ({ session }) => {
-                // logger
-                this.logger.info('调用test gimg指令')
-                // 获取主播信息
-                const { data } = await ctx.ba.getMasterInfo('686127')
-                let resizedImage: Buffer
-                try {
-                    resizedImage = await Jimp.read(data.info.face).then(async image => {
-                        return await image.resize(100, 100).getBufferAsync(Jimp.MIME_PNG)
-                    })
-                } catch (e) {
-                    if (e.message === 'Unsupported MIME type: image/webp') console.log('主播使用的是webp格式头像，无法进行渲染');
-                    else console.log(e);
-                }
-                // 发送下播提示语
-                await session.send(
-                    <>{resizedImage && h.image(resizedImage, 'image/png')} 主播{data.info.uname}已下播</>
-                )
-            })
-
-        testCom
-            .subcommand('.sendmsg', '测试发送消息方法')
-            .usage('测试发送消息方法')
-            .example('test sendmsg')
-            .action(async ({ session }) => {
-                // 获得对应bot
-                const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-                // this.sendMsg(['all'], bot, 'Hello World')
-            }) */
-
+    private async initBiliCmd(ctx: Context) {
         const biliCom = ctx.command('bili', 'bili-notify插件相关指令', { permissions: ['authority:3'] })
-
+        
         biliCom.subcommand('.login', '登录B站之后才可以进行之后的操作')
             .usage('使用二维码登录，登录B站之后才可以进行之后的操作')
             .example('bili login')
@@ -242,61 +123,63 @@ class ComRegister {
             })
 
         biliCom
-            .subcommand('.unsub <uid:string>', '取消订阅UP主动态、直播或全部')
+            .subcommand('.unsub <uid:number>', '取消订阅UP主动态、直播或全部')
             .usage('取消订阅，加-l为取消直播订阅，加-d为取消动态订阅，什么都不加则为全部取消')
             .option('live', '-l')
             .option('dynamic', '-d')
-            .option('all', '-a')
             .example('bili unsub 用户UID -ld')
             .action(async ({ session, options }, uid) => {
-                this.logger.info('调用bili.unsub指令')
-                session.send(`取消订阅${uid}的动态`)
-                // 若用户UID为空则直接返回
-                // if (!uid) return '用户UID不能为空'
-                // 定义是否存在
-                // let exist: boolean
-                // await Promise.all(this.subManager.map(async (sub, i) => {
-                //     if (sub.uid === uid) {
-                //         // 取消单个订阅
-                //         if (options.live || options.dynamic) {
-                //             if (options.live) await session.send(this.unsubSingle(ctx, sub.roomId, 0)) /* 0为取消订阅Live */
-                //             if (options.dynamic) await session.send(this.unsubSingle(ctx, sub.uid, 1)) /* 1为取消订阅Dynamic */
-                //             // 将存在flag设置为true
-                //             exist = true
-                //             return
-                //         }
-                //         // 取消全部订阅 执行dispose方法，销毁定时器
-                //         if (sub.dynamic) this.subManager[i].dynamicDispose()
-                //         if (sub.live) this.subManager[i].liveDispose()
-                //         // 从数据库中删除订阅
-                //         await ctx.database.remove('bili_sub', { uid: this.subManager[i].uid })
-                //         // 将该订阅对象从订阅管理对象中移除
-                //         this.subManager.splice(i, 1)
-                //         // id--
-                //         this.num--
-                //         // 发送成功通知
-                //         session.send('已取消订阅该用户')
-                //         // 更新控制台提示
-                //         this.updateSubNotifier(ctx)
-                //         // 将存在flag设置为true
-                //         exist = true
-                //     }
-                // }))
-                // 未订阅该用户，无需取消订阅
-                // !exist && session.send('未订阅该用户，无需取消订阅')
+                // 查数据库获取当前订阅状态
+                let channel = `${session.event.platform}:${session.event.channel.id}`
+                let data = await ctx.database.get('bili_sub', { uid, channel })
+                if(data.length === 0) return '未订阅该UP主'
+                let noSpec = options.live === null && options.dynamic === null
+                let unsubLive = noSpec ? true : options.live===true // 是否应该取消订阅直播
+                let unsubDynamic = noSpec ? true : options.dynamic===true // 是否应该取消订阅动态
+
+                let subdata = data[0]
+                subdata.live = (subdata.live && !unsubLive) ? 1 : 0
+                subdata.dynamic = (subdata.dynamic && !unsubDynamic) ? 1 : 0
+                if (!subdata.live && !subdata.dynamic) {
+                    ctx.database.remove('bili_sub', {
+                        uid,
+                        channel
+                    })
+                    await this.checkUnsubUser(ctx, uid)
+                } else {
+                    ctx.database.set('bili_sub', {
+                        uid, channel
+                    }, {
+                        live: subdata.live,
+                        dynamic: subdata.dynamic,
+                        time: new Date()
+                    })
+                }
             })
 
         biliCom
-            .subcommand('.show', '展示订阅对象')
-            .usage('展示订阅对象')
-            .example('bili show')
-            .action(() => {
-                const subTable = this.subShow()
-                return subTable
+            .subcommand('.list', '列出订阅对象')
+            .action(async ({ session }) => {
+                let channel = `${session.event.platform}:${session.event.channel.id}`
+                let reply = channel + '的订阅列表：\n'
+                ctx.database.join(['bili_sub', 'bili_user'], (bili_sub, bili_user) => 
+                     $.and(
+                        $.eq(bili_sub.uid, bili_user.uid),
+                        $.eq(bili_sub.channel, channel)
+                    )
+                ).execute().then(async data => {
+                    if (data.length === 0) reply = '还没有订阅哦'
+                    else reply = `共有${data.length}个订阅：\n` + data.map(item => 
+                        `- ${item.bili_sub.uid}@${item.bili_user.room_id} ${item.bili_sub.live ? '直播' : ''} ${item.bili_sub.dynamic ? '动态' : ''}`
+                    ).join('\n')
+                    await session.send(reply)
+                }).catch(err => {
+                    console.log(err)
+                })
             })
 
         biliCom
-            .subcommand('.sub <mid:string> [...targets:string]', '订阅B站用户动态和直播通知')
+            .subcommand('.sub <mid:number> [...targets:string]', '订阅B站用户动态和直播通知')
             .option('live', '-l 订阅直播')
             .option('dynamic', '-d 订阅动态')
             .usage('订阅用户动态和直播通知，若需要订阅直播请加上-l，需要订阅动态则加上-d。若没有加任何参数，之后会向你单独询问，尖括号中为必选参数，中括号为可选参数，目标群号若不填，则默认为当前群聊')
@@ -310,12 +193,6 @@ class ComRegister {
                 }
                 // 检查必选参数是否有值
                 if (!mid) return '请输入用户uid'
-                // 判断要订阅的用户是否已经存在于订阅管理对象中
-                if (this.subManager && this.subManager.some(sub => sub.uid === mid)) {
-                    return '已订阅该用户，请勿重复订阅'
-                }
-                // 定义是否需要直播通知，动态订阅，视频推送
-                let liveMsg: boolean, dynamicMsg: boolean
                 // 获取用户信息
                 let content: any
                 try {
@@ -335,8 +212,6 @@ class ComRegister {
                     }
                     return msg
                 }
-                // 设置目标ID
-                let targetId: string
                 let currPlatform = session.platform
 
 
@@ -353,145 +228,298 @@ class ComRegister {
                 }
                 // 获取data
                 const { data } = content
-                // 判断是否需要订阅直播
-                liveMsg = await this.checkIfNeedSub(options.live, '直播', session, data)
-                // 判断是否需要订阅动态
-                dynamicMsg = await this.checkIfNeedSub(options.dynamic, '动态', session)
                 // 判断是否未订阅任何消息
-                if (!liveMsg && !dynamicMsg) {
+                if (!options.live && !options.dynamic) {
                     return '您未订阅该UP的任何消息'
                 }
+                // TODO 将该用户移动到关注分组
                 // 获取直播房间号
                 let roomId = data.live_room?.roomid.toString()
                 // 保存到数据库中
-                let sub = await ctx.database.create('bili_user', {
+                await ctx.database.upsert('bili_user', [{
                     uid: mid,
-                    room_id: roomId
-                })
-                targetChannels.forEach(async (channel: string) => {
-                    await ctx.database.create('bili_sub', {
-                        uid: mid,
-                        channel,
-                        live: liveMsg ? 1 : 0,
-                        dynamic: dynamicMsg ? 1 : 0
-                    })
-                })
+                    room_id: roomId,
+                }], 'uid')
+                let subRows = targetChannels.map((channel: string) => {return {
+                    uid: mid,
+                    channel,
+                    live: options.live ? 1 : 0,
+                    dynamic: options.dynamic ? 1 : 0,
+                    time: new Date(),
+                }})
+                await ctx.database.upsert('bili_sub', subRows, ['uid', 'channel'])
                 // 获取用户信息
                 let userData: any
                 try {
-                    const { data } = await ctx.ba.getMasterInfo(sub.uid)
+                    const { data } = await ctx.ba.getMasterInfo(mid)
                     userData = data
                 } catch (e) {
                     this.logger.error('bili sub指令 getMasterInfo() 发生了错误，错误为：' + e.message)
                     return '订阅出错啦，请重试'
                 }
+                await ctx.database.set('bili_user', {
+                    uid: mid
+                }, {
+                    uname: userData.info.uname
+                })
                 // 需要订阅直播
-                if (liveMsg) {
-                    // await session.execute(`bili live ${roomId} ${targetId.split(',').join(' ')}`)
-                    // 发送订阅消息通知
-                    await session.send(`订阅${userData.info.uname}直播通知`)
+                let subType = []
+                if (options.live) {
+                    subType.push('直播')
                 }
                 // 需要订阅动态
-                if (dynamicMsg) {
-                    // await session.execute(`bili dynamic ${mid} ${targetId.split(',').join(' ')}`)
-                    // 发送订阅消息通知
-                    await session.send(`订阅${userData.info.uname}动态通知`)
+                if (options.dynamic) {
+                    subType.push('动态')
                 }
+                await session.send(`订阅了${userData.info.uname} ${subType.join('和')} 通知`)
                 // 新增订阅展示到控制台
                 this.updateSubNotifier(ctx)
             })
 
         // biliCom
-        //     .subcommand('.dynamic <uid:string> <...guildId:string>', '订阅用户动态推送', { hidden: true })
-        //     .usage('订阅用户动态推送')
-        //     .example('bili dynamic 1194210119 订阅UID为1194210119的动态')
-        //     .action(async ({ session }, uid, ...guildId) => {
-        //         this.logger.info('调用bili.dynamic指令')
-        //         // 如果uid为空则返回
-        //         if (!uid) return `${uid}非法调用 dynamic 指令` // 用户uid不能为空
-        //         if (!guildId) return `${uid}非法调用 dynamic 指令` // 目标群组或频道不能为空
-        //         // 寻找对应订阅管理对象
-        //         const index = this.subManager.findIndex(sub => sub.uid === uid)
-        //         // 不存在则直接返回
-        //         if (index === -1) return '请勿直接调用该指令'
-        //         // 获得对应bot
-        //         const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-        //         // 开始循环检测
-        //         let dispose: () => void
-        //         if (this.config.dynamicDebugMode) {
-        //             dispose = ctx.setInterval(this.debug_dynamicDetect(ctx, bot, uid, guildId), config.dynamicLoopTime * 1000)
-        //         } else {
-        //             dispose = ctx.setInterval(this.dynamicDetect(ctx, bot, uid, guildId), config.dynamicLoopTime * 1000)
+        //     .subcommand('.status <roomId:string>', '查询主播当前直播状态', { hidden: true })
+        //     .usage('查询主播当前直播状态')
+        //     .example('bili status 732')
+        //     .action(async ({ session }, roomId) => {
+        //         this.logger.info('调用bili.status指令')
+        //         if (!roomId) return session.send('请输入房间号!')
+        //         let content: any
+        //         try {
+        //             content = await ctx.ba.getLiveRoomInfo(roomId)
+        //         } catch (e) {
+        //             return 'bili status指令 getLiveRoomInfo() 发生了错误，错误为：' + e.message
         //         }
-        //         // 将销毁函数保存到订阅管理对象
-        //         this.subManager[index].dynamicDispose = dispose
+        //         const { data } = content
+        //         let userData: any
+        //         try {
+        //             const { data: userInfo } = await ctx.ba.getMasterInfo(data.uid)
+        //             userData = userInfo
+        //         } catch (e) {
+        //             return 'bili status指令 getMasterInfo() 发生了错误，错误为：' + e.message
+        //         }
+        //         // B站出问题了
+        //         if (content.code !== 0) {
+        //             if (content.msg === '未找到该房间') {
+        //                 session.send('未找到该房间')
+        //             } else {
+        //                 session.send('未知错误，错误信息为：' + content.message)
+        //             }
+        //             return
+        //         }
+
+        //         const { pic, buffer } = await ctx.gi.generateLiveImg(
+        //             data,
+        //             userData,
+        //             data.live_status !== 1 ?
+        //                 LiveType.NotLiveBroadcast :
+        //                 LiveType.LiveBroadcast
+        //         )
+        //         // pic 存在，使用的是render模式
+        //         if (pic) return pic
+        //         // pic不存在，说明使用的是page模式
+        //         await session.send(h.image(buffer, 'image/png'))
         //     })
+    }
 
-        // biliCom
-        //     .subcommand('.live <roomId:string> <...guildId:string>', '订阅主播开播通知', { hidden: true })
-        //     .usage('订阅主播开播通知')
-        //     .example('bili live 26316137 订阅房间号为26316137的直播间')
-        //     .action(async ({ session }, roomId, ...guildId) => {
-        //         this.logger.info('调用bili.live指令')
-        //         // 如果room_id为空则返回
-        //         if (!roomId) return `${roomId}非法调用 dynamic 指令` // 订阅主播房间号不能为空
-        //         if (!guildId) return `${roomId}非法调用 dynamic 指令` // 目标群组或频道不能为空
-        //         // 要订阅的对象不在订阅管理对象中，直接返回
-        //         const index = this.subManager.findIndex(sub => sub.roomId === roomId)
-        //         if (index === -1) return '请勿直接调用该指令'
-        //         // 获得对应bot
-        //         const bot = this.getTheCorrespondingBotBasedOnTheSession(session)
-        //         // 开始循环检测
-        //         const dispose = ctx.setInterval(this.liveDetect(ctx, bot, roomId, guildId), config.liveLoopTime * 1000)
-        //         // 保存销毁函数
-        //         this.subManager[index].liveDispose = dispose
-        //     })
+    private async setupFollowGroup(ctx: Context) {
+        try {
+            let gname = this.config.followGroup
+            if (gname.length === 0) return
+            let egroup = (await ctx.ba.getFollowGroups()).data.find(group => 
+                group.name === gname
+            )
+            if(egroup){
+                this.followGroup = egroup.tagid
+            } else {
+                ctx.logger.error('未找到关注分组：' + gname)
+                const resp = await ctx.ba.createFollowGroup(gname)
+                if (resp.code === 0) {
+                    this.followGroup = resp.data.tagid
+                } else {
+                    ctx.logger.error('创建关注分组失败，错误为：' + resp.message)
+                }
+            }
+        } catch (e) {
+            ctx.logger.error(e.message)
+        } finally {
+            ctx.logger.info('设置关注分组为：' + this.followGroup)
+        }
+    }
 
-        biliCom
-            .subcommand('.status <roomId:string>', '查询主播当前直播状态', { hidden: true })
-            .usage('查询主播当前直播状态')
-            .example('bili status 732')
-            .action(async ({ session }, roomId) => {
-                this.logger.info('调用bili.status指令')
-                if (!roomId) return session.send('请输入房间号!')
-                let content: any
-                try {
-                    content = await ctx.ba.getLiveRoomInfo(roomId)
-                } catch (e) {
-                    return 'bili status指令 getLiveRoomInfo() 发生了错误，错误为：' + e.message
-                }
-                const { data } = content
-                let userData: any
-                try {
-                    const { data: userInfo } = await ctx.ba.getMasterInfo(data.uid)
-                    userData = userInfo
-                } catch (e) {
-                    return 'bili status指令 getMasterInfo() 发生了错误，错误为：' + e.message
-                }
-                // B站出问题了
-                if (content.code !== 0) {
-                    if (content.msg === '未找到该房间') {
-                        session.send('未找到该房间')
-                    } else {
-                        session.send('未知错误，错误信息为：' + content.message)
-                    }
-                    return
-                }
+    private async checkUnsubUser(ctx: Context, uid: number) {
+        // 检查该用户是否仍被订阅
+        let subNum = await ctx.database.select('bili_sub', {uid})
+            .execute(row => $.count(row.channel))
+        if(subNum===0){
+            await ctx.database.remove('bili_user', { uid })
+            await ctx.ba.delFromGroup([uid])
+        }
+    }
 
-                const { pic, buffer } = await ctx.gi.generateLiveImg(
-                    data,
-                    userData,
-                    data.live_status !== 1 ?
-                        LiveType.NotLiveBroadcast :
-                        LiveType.LiveBroadcast
-                )
-                // pic 存在，使用的是render模式
+    private registerDebugCommand(ctx: Context) {
+        
+        const testCom = ctx.command('btest', { hidden: true, permissions: ['authority:5'] })
+
+        testCom.subcommand('.cookies')
+            .usage('测试指令，用于测试从数据库读取cookies')
+            .action(async () => {
+                this.logger.info('调用test cookies指令')
+                // await ctx.ba.loadCookiesFromDatabase()
+                console.log(JSON.parse(ctx.ba.getCookies()));
+            })
+
+        testCom.subcommand('.mvg <uid:number>')
+            .action(async ({session}, uid) => {
+                const resp = await ctx.ba.cpToGroup([uid], [this.followGroup])
+                return JSON.stringify(resp)
+            })
+        testCom.subcommand('.delg <uid:number>')
+            .action(async ({session}, uid) => {
+                const resp = await ctx.ba.delFromGroup([uid])
+                return JSON.stringify(resp)
+            })
+        
+        testCom.subcommand('.checkSub <uid:string>')
+            .usage('测试指令，用于测试检查用户是否被订阅')
+            .action(async ({session}, uid) => {
+                const resp = await ctx.ba.checkFollow(uid)
+                switch(resp.data.attribute){
+                    case 0: return '未订阅'
+                    case 2: return '已订阅'
+                    case 6: return '已互粉'
+                    case 128: return '被拉黑'
+                    default: return '未知'
+                }
+            })
+        
+        testCom.subcommand('.sub <uid:string>')
+            .usage('测试指令，用于测试订阅用户')
+            .action(async ({session}, uid) => {
+                const resp = await ctx.ba.followUser(uid)
+                return JSON.stringify(resp)
+            })
+
+        testCom.subcommand('.unsub <uid:string>')
+            .usage('测试指令，用于测试取消订阅用户')
+            .action(async ({session}, uid) => {
+                const resp = await ctx.ba.unfollowUser(uid)
+                return JSON.stringify(resp)
+            })
+        testCom.subcommand('.followGroups')
+            .action(async () => {
+                const resp = await ctx.ba.getFollowGroups()
+                return resp.data.map(g=>`${g.tagid}：${g.name}`).join('\n')
+            })
+
+        testCom
+            .subcommand('.my')
+            .usage('测试指令，用于测试获取自己信息')
+            .example('test.my')
+            .action(async () => {
+                const content = await ctx.ba.getMyselfInfo()
+                return JSON.stringify(content)
+            })
+
+        testCom
+            .subcommand('.user <mid:string>')
+            .usage('测试指令，用于测试获取用户信息')
+            .example('test.user 用户UID')
+            .action(async (_, mid) => {
+                const content = await ctx.ba.getUserInfo(mid)
+                return JSON.stringify(content)
+            })
+
+        testCom
+            .subcommand('.time')
+            .usage('测试时间接口')
+            .example('test.time')
+            .action(async ({ session }) => {
+                return JSON.stringify(await ctx.ba.getTimeNow())
+            })
+
+        testCom
+            .subcommand('.gimg <uid:string> <index:number>')
+            .usage('测试图片生成')
+            .example('test.gimg')
+            .action(async ({ session }, uid, index) => {
+                // logger
+                this.logger.info('调用test gimg指令')
+                // 获取用户空间动态数据
+                const { data } = await ctx.ba.getUserSpaceDynamic(uid)
+                // 获取动态推送图片
+                const { pic, buffer } = await ctx.gi.generateDynamicImg(data.items[index])
+                // 如果pic存在，则直接返回pic
                 if (pic) return pic
                 // pic不存在，说明使用的是page模式
                 await session.send(h.image(buffer, 'image/png'))
             })
 
-        biliCom
+        testCom
+            .subcommand('.group')
+            .usage('查看session groupId')
+            .example('test group')
+            .action( async ({ session }) => {
+                session.send(session.event.guild.id)
+            })
+
+        testCom
+            .subcommand('.utc')
+            .usage('获取当前UTC+8 Unix时间戳')
+            .example('test utc')
+            .action(async ({ session }) => {
+                session.send((await ctx.ba.getServerUTCTime()).toString())
+            })
+
+        testCom
+            .subcommand('.livestop <uid:number>', '发送下播提示语测试')
+            .usage('发送下播提示语测试')
+            .example('test livestop')
+            .action(async ({ session }, uid) => {
+                // logger
+                this.logger.info('调用test gimg指令')
+                // 获取主播信息
+                const { data } = await ctx.ba.getMasterInfo(uid)
+                let resizedImage: Buffer
+                try {
+                    resizedImage = await Jimp.read(data.info.face).then(async image => {
+                        return await image.resize(100, 100).getBufferAsync(Jimp.MIME_PNG)
+                    })
+                } catch (e) {
+                    if (e.message === 'Unsupported MIME type: image/webp') console.log('主播使用的是webp格式头像，无法进行渲染');
+                    else console.log(e);
+                }
+                // 发送下播提示语
+                await session.send(
+                    <>{resizedImage && h.image(resizedImage, 'image/png')} 主播{data.info.uname}已下播</>
+                )
+            })
+
+        testCom.subcommand('.subs', '发送己方关注列表近期更新')
+            .action(async ({ session }) => {
+                this.logger.info('调用test gimg指令')
+                const { data } = await ctx.ba.getDynamicList()
+                data.items.forEach(async (item, index) => {
+                    try {
+                        const { pic, buffer } = await ctx.gi.generateDynamicImg(item)
+                        if (pic) await session.send(pic)
+                        else await session.send(h.image(buffer, 'image/png'))
+                    } catch (e) {
+                        console.log('无法处理第' + index + '个动态:', item, e)
+                    }
+                })
+            })
+
+        testCom
+            .subcommand('.send <content:string>', '测试发送消息')
+            .usage('测试发送消息方法')
+            .example('test sendmsg')
+            .action(async ({ session }, content) => {
+                // 获得对应bot
+                this.sendToMaster(ctx, content)
+            })
+        
+
+        testCom
             .subcommand('.bot', '查询当前拥有的机器人信息', { hidden: true })
             .usage('查询当前拥有的机器人信息')
             .example('bili bot 查询当前拥有的机器人信息')
@@ -504,27 +532,22 @@ class ComRegister {
                     this.logger.info('--------------------------------')
                 })
             })
+    }
 
-        biliCom
-            .subcommand('.private <msg:string>', '向主人账号发送一条测试消息', { hidden: true })
-            .usage('向主人账号发送一条测试消息')
-            .example('bili private 向主人账号发送一条测试消息')
-            .action(async ({ session }, msg) => {
-                let master = this.config.master
-                if (master.enable && master.masterAccount.trim() !== '') {
-                    let content = `B站动态转发插件-收到用户反馈\n平台:${session.platform}\nguildId：${session.guildId}\nchannelId：${session.channelId}\nuserId：${session.userId}\nuserName：${session.username}\n消息内容：${msg}`
-                    // 获得对应bot
-                    this.sendToMaster(ctx, content)
-                    // 发送提示
-                    await session.send('已发送消息，如未收到则说明您的机器人不支持发送私聊消息或您的信息填写有误')
-                }
-            })
+    private async broadcast(ctx: Context, channel: string[], content: h.Fragment) {
+        if (ctx.broadcast){
+            await ctx.broadcast(channel, content)
+        } else if(ctx.database.broadcast){
+            await ctx.database.broadcast(channel, content)
+        } else {
+            console.log('无法发送广播')
+        }
     }
 
     private async sendToMaster(ctx: Context, content: h.Fragment){
         let master = this.config.master
                 if (master.enable && master.masterAccount.trim() !== '') {
-                    ctx.database.broadcast([master.masterAccount], content)
+                    await this.broadcast(ctx, [master.masterAccount], content)
                 }
     }
 
@@ -1143,9 +1166,9 @@ class ComRegister {
     subShow() {
         // 在控制台中显示订阅对象
         let table: string = ``
-        this.subManager.forEach(sub => {
-            table += `UID:${sub.uid}  ${sub.dynamic ? '已订阅动态' : ''}  ${sub.live ? '已订阅直播' : ''}` + '\n'
-        })
+        // this.subManager.forEach(sub => {
+        //     table += `UID:${sub.uid}  ${sub.dynamic ? '已订阅动态' : ''}  ${sub.live ? '已订阅直播' : ''}` + '\n'
+        // })
         return table ? table : '没有订阅任何UP'
     }
 
@@ -1483,6 +1506,7 @@ namespace ComRegister {
         },
         liveStartAtAll: boolean,
         liveLoopTime: number,
+        followGroup: string,
         customLiveStart: string,
         customLiveEnd: string,
         dynamicUrl: boolean,
@@ -1514,13 +1538,11 @@ namespace ComRegister {
                     masterAccount: Schema.string()
                         .role('secret')
                         .default('')
-                        .description('主人账号，在Q群使用可直接使用QQ号，若在其他平台使用，请使用inspect插件获取自身ID'),
-                    masterAccountGuildId: Schema.string()
-                        .role('secret')
-                        .description('主人账号所在的群组ID，只有在QQ频道、Discord这样的环境才需要填写，请使用inspect插件获取群组ID'),
+                        .description('主人账号，请使用inspect插件获取，填入格式为 平台:频道'),
                 })
             ])
         ]),
+        followGroup: Schema.string().description('机器人关注UP后的分组, 为空代表不移动到特定分组').default('Bot关注'),
 
         dynamicSection: Schema.object({}).description('动态通知设置'),
         dynamicUrl: Schema.boolean()
