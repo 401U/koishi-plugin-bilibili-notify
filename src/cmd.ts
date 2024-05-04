@@ -5,6 +5,11 @@ import { } from '@koishijs/plugin-help'
 import QRCode from 'qrcode'
 import {} from 'koishi-plugin-cron'
 
+declare module 'koishi' {
+    interface Context {
+        broadcast?: (channel: string[], content: h.Fragment) => Promise<void>;
+    }
+}
 
 class BiliCmd {
     static inject = ['biliApi', 'wbi', 'database', 'biliDaemon', 'cron', 'biliRender'];
