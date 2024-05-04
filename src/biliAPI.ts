@@ -15,8 +15,10 @@ declare module 'koishi' {
 // 在getUserInfo中检测到番剧出差的UID时，要传回的数据：
 const bangumiTripData = { "code": 0, "data": { "live_room": { "roomid": 931774 } } }
 
-const GET_DYNAMIC_LIST = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all'
-const GET_USER_SPACE_DYNAMIC_LIST = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
+const GET_DYNAMIC_LIST = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all?timezone_offset=-480&platform=web&features=itemOpusStyle'
+const DYNAMIC_DETAIL = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/detail?timezone_offset=-480&platform=web&features=itemOpusStyle&id='
+
+const GET_USER_SPACE_DYNAMIC_LIST = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?timezone_offset=-480&platform=web&features=itemOpusStyle&host_mid='
 const GET_COOKIES_INFO = 'https://passport.bilibili.com/x/passport-login/web/cookie/info'
 const GET_USER_INFO = 'https://api.bilibili.com/x/space/wbi/acc/info'
 const GET_MYSELF_INFO = 'https://api.bilibili.com/x/member/web/account'
@@ -120,6 +122,10 @@ class BiliAPI extends Service {
         return data
     }
 
+    async getDynamicDetail(did: string){
+        return await this.get(`${DYNAMIC_DETAIL}${did}`) as BiliResp<DynamicDetail>
+    }
+
     async followUser(uid: number) {
         return await this.setFollowRelation(uid, 1)
     }
@@ -203,7 +209,7 @@ class BiliAPI extends Service {
     }
 
     async getUserSpaceDynamic(mid: string) {
-        return await this.get(`${GET_USER_SPACE_DYNAMIC_LIST}?host_mid=${mid}`)
+        return await this.get(`${GET_USER_SPACE_DYNAMIC_LIST}${mid}`)
     }
 
     // Check if Token need refresh

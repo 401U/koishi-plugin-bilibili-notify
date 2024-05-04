@@ -8,7 +8,7 @@ import {} from 'koishi-plugin-cron'
 
 
 class ComRegister {
-    static inject = ['ba', 'gi', 'wbi', 'database', 'sm', 'cron'];
+    static inject = ['ba', 'wbi', 'database', 'sm', 'cron', 'biliRender'];
     logger: Logger;
     config: ComRegister.Config
     loginTimer: Function
@@ -77,11 +77,9 @@ class ComRegister {
                 // 为每个动态生成消息
                 const msgs = itemsNew.filter(item=>item.modules.module_author.mid === uid).map(async item => 
                     // 生成消息
-                    await ctx.gi.generateDynamicImg(item)
-                ).forEach(async (msg) => {
-                    const {pic, buffer} = await msg
-                    if(pic) await this.broadcast(ctx, targets, pic)
-                    else await this.broadcast(ctx, targets, h.image(buffer, 'image/png'))
+                    await ctx.biliRender.render(item)
+                ).forEach(async msg => {
+                    await this.broadcast(ctx, targets, await msg)
                     num_sent++
                 })
             })
@@ -518,12 +516,20 @@ class ComRegister {
                 this.logger.info('调用test gimg指令')
                 // 获取用户空间动态数据
                 const { data } = await ctx.ba.getUserSpaceDynamic(uid)
+                this.logger.info('获取到动态数据\n' + JSON.stringify(data.items[index], null, '  '))
                 // 获取动态推送图片
-                const { pic, buffer } = await ctx.gi.generateDynamicImg(data.items[index])
-                // 如果pic存在，则直接返回pic
-                if (pic) return pic
-                // pic不存在，说明使用的是page模式
-                await session.send(h.image(buffer, 'image/png'))
+                const msg = await ctx.biliRender.render(data.items[index])
+                await session.send(msg)
+            })
+        
+        testCom.subcommand('.detail <did:string>')
+            .usage('测试获取动态详情')
+            .action(async ({ session }, did) => {
+                const { data } = await ctx.ba.getDynamicDetail(did)
+                await session.send("动态类型：" + data.item.type)
+                this.logger.info("获取到动态类型\n" + JSON.stringify(data.item, null, '  '))
+                const msg = await ctx.biliRender.render(data.item)
+                await session.send(msg)
             })
 
         testCom

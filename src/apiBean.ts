@@ -19,47 +19,6 @@ interface Pagination<T>{
     items: T[]
 }
 
-// {
-//     basic: {
-//       comment_id_str: '315310664',
-//       comment_type: 11,
-//       like_icon: { action_url: '', end_url: '', id: 0, start_url: '' },
-//       rid_str: '315310664'
-//     },
-//     id_str: '927156355473604674',
-//     modules: {
-//       module_author: {
-//         avatar: [Object],
-//         decorate: [Object],
-//         face: 'https://i2.hdslb.com/bfs/face/37ae7362f75cff540259b23413aec6803d2d8dcd.jpg',
-//         face_nft: false,
-//         following: true,
-//         jump_url: '//space.bilibili.com/401742377/dynamic',
-//         label: '',
-//         mid: 401742377,
-//         name: '原神',
-//         official_verify: [Object],
-//         pendant: [Object],
-//         pub_action: '',
-//         pub_location_text: '',
-//         pub_time: '7小时前',
-//         pub_ts: 1714708811,
-//         type: 'AUTHOR_TYPE_NORMAL',
-//         vip: [Object]
-//       },
-//       module_dynamic: {
-//         additional: [Object],
-//         desc: [Object],
-//         major: [Object],
-//         topic: null
-//       },
-//       module_more: { three_point_items: [Array] },
-//       module_stat: { comment: [Object], forward: [Object], like: [Object] }
-//     },
-//     type: 'DYNAMIC_TYPE_DRAW',
-//     visible: true
-//   }
-
 interface TextHolder{
     text: string
 }
@@ -75,7 +34,7 @@ interface DynamicItem{
             official_verify: any
             pub_ts: number
             face: string
-            decorate: {
+            decorate?: {
                 card_url: string
                 fan: {
                     num_str: number
@@ -86,43 +45,7 @@ interface DynamicItem{
                 type: number
             }
         }
-        module_dynamic: {
-            topic: {
-                name: string
-            }
-            desc: {
-                rich_text_nodes: DynamicItemRichTextNode[]
-            }
-            major: {
-                draw:{
-                    items: DynamicItemDrawItem[]
-                }
-                archive: {
-                    badge: TextHolder
-                    cover: string
-                    duration_text: string
-                    title: string
-                    desc: string
-                    stat: {
-                        play: string
-                        danmaku: string
-                    }
-                    bvid: string
-                }
-            }
-            additional: {
-                type: string
-                reserve: {
-                    button: {
-                        uncheck: TextHolder
-                    }
-                    title: string
-                    desc1: TextHolder
-                    desc2: TextHolder
-                    desc3: TextHolder
-                }
-            }
-        }
+        module_dynamic: DynamicItemDynamicWrapper
         module_stat: {
             comment: {
                 count: number
@@ -139,6 +62,48 @@ interface DynamicItem{
     orig: DynamicItem
 }
 
+interface DynamicItemDynamicWrapper{
+    topic?: {
+        name: string
+    }
+    desc: {
+        rich_text_nodes: DynamicItemRichTextNode[]
+    }
+    major: {
+        draw:{
+            items: DynamicItemDrawItem[]
+        }
+        archive: {
+            badge: TextHolder
+            cover: string
+            duration_text: string
+            title: string
+            desc: string
+            stat: {
+                play: string
+                danmaku: string
+            }
+            bvid: string
+        }
+    }
+    additional: AdditionalModuleWrapper
+}
+
+interface AdditionalModuleWrapper {
+    type: string
+    reserve: AdditionalModuleReserve
+}
+
+interface AdditionalModuleReserve {
+    button: {
+        uncheck: TextHolder
+    }
+    title: string
+    desc1: TextHolder
+    desc2: TextHolder
+    desc3: TextHolder
+}
+
 interface DynamicItemRichTextNode{
     emoji: {
         icon_url: string
@@ -148,4 +113,8 @@ interface DynamicItemRichTextNode{
 
 interface DynamicItemDrawItem{
     src: string
+}
+
+interface DynamicDetail{
+    item: DynamicItem
 }

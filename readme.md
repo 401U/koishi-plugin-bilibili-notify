@@ -3,6 +3,9 @@
 基于 [koishi](../../../../koishijs/koishi) 框架的B站推送插件
 
 ---
+<!-- 860067218225889459 长图动态 -->
+<!-- 927558317136412675 多图动态，附加相关游戏 -->
+<!-- 926866513862852628 带有title的多图动态 -->
 
 - koishi-plugin-bilibili-notify [![npm](https://img.shields.io/npm/v/koishi-plugin-bilibili-notify?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-bilibili-notify)
   - [功能](#功能)
