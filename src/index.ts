@@ -1,6 +1,6 @@
 import { Context, ForkScope, Schema, Service } from 'koishi'
 import { } from '@koishijs/plugin-notifier'
-import BiliCmd from './BiliCmd'
+import BiliCmd from './biliCmd'
 import * as Database from './database'
 // import Service
 import Wbi from './wbi'

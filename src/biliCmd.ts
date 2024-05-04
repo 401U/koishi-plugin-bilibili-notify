@@ -1,4 +1,4 @@
-import { $, Bot, Context, Logger, Schema, Session, h } from "koishi"
+import { $, Bot, Context, Logger, Schema, h } from "koishi"
 import { Notifier } from "@koishijs/plugin-notifier";
 import { } from '@koishijs/plugin-help'
 // 导入qrcode
@@ -6,14 +6,9 @@ import QRCode from 'qrcode'
 import Jimp from 'jimp'
 import {} from 'koishi-plugin-cron'
 
-declare module 'koishi' {
-    interface Context {
-        biliCmd: BiliCmd
-    }
-}
 
 class BiliCmd {
-    static inject = ['biliApi', 'wbi', 'database', 'sm', 'cron', 'biliRender'];
+    static inject = ['biliApi' , 'wbi', 'database', 'sm', 'cron', 'biliRender'];
     log: Logger;
     conf: BiliCmd.Config
     loginTimer: Function
@@ -26,8 +21,8 @@ class BiliCmd {
 
     constructor(ctx: Context, config: BiliCmd.Config) {
         this.log = ctx.logger('BiliCmd')
-        this.conf = config
         this.log.info('开始加载')
+        this.conf = config
         // 从数据库获取订阅
         this.checkIfLoginInfoIsLoaded(ctx).then(() => {
             // 初始化关注分组信息
@@ -37,12 +32,12 @@ class BiliCmd {
         this.log.debug('数据库与分组加载完毕')
         this.initBiliCmd(ctx)
         this.log.debug('bili指令加载完毕')
-        if(config.commandDebug) this.registerDebugCommand(ctx)
-        ctx.cron(config.dynamicCheckCron, () => {
+        if(this.conf.commandDebug) this.registerDebugCommand(ctx)
+        ctx.cron(this.conf.dynamicCheckCron, () => {
             this.log.debug('动态监测开始')
             this.checkDynamic(ctx)
         })
-        ctx.cron(config.liveCheckCron, () => {
+        ctx.cron(this.conf.liveCheckCron, () => {
             this.log.info('直播监测开始')
             this.checkLive(ctx)
         })

@@ -19,7 +19,7 @@ interface ModuleRenderResult{
 type RenderFunc = (data: any, forward: boolean) => ModuleRenderResult
 
 class Render extends Service{
-    static inject = ['puppeteer', 'ba'] // 应该取消使用ba
+    static inject = ['puppeteer']
     conf: Render.Config
     log: Logger
     constructor(ctx: Context, config: Render.Config) {
