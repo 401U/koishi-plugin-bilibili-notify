@@ -56,7 +56,19 @@ class ComRegister {
                 startTime,
             })
             const resp = await ctx.ba.getDynamicList()
-            const idStrs = resp.data.items.map(item=>item.id_str).join('\n')
+            // resp.data.items.forEach(item => {
+            //     let drawNodes = item.modules.module_dynamic.desc
+            //     let types = drawNodes ? drawNodes.rich_text_nodes.map(node => node.type) : []
+            //     let major = item.modules.module_dynamic.major
+            //     let majorType = major ? major.type : ''
+            //     if(major && major.opus && major.opus.summary){
+            //         types = types.concat(major.opus.summary.rich_text_nodes.map(node => node.type))
+            //     }
+
+            //     types = [...new Set(types)]
+            //     let addition = item.modules.module_dynamic.additional
+            //     this.logger.info(`id: ${item.id_str}\ntype: ${item.type}\nmajorType: ${majorType}\nadditionalType: ${addition? addition.type:""}\nnodeTypes: ${types}`)
+            // })
             const num_total = resp.data.items.length
             const itemsNew = resp.data.items.filter(item=>item.modules.module_author.pub_ts > Math.floor(prevTime.getTime()/1000))
             const num_new = itemsNew.length
@@ -568,7 +580,8 @@ class ComRegister {
                 }
                 // 发送下播提示语
                 await session.send(
-                    <>{resizedImage && h.image(resizedImage, 'image/png')} 主播{data.info.uname}已下播</>
+                    resizedImage ? h.image(resizedImage, 'image/png'):''
+                    + '主播' + data.info.uname + '已下播'
                 )
             })
 
@@ -578,9 +591,8 @@ class ComRegister {
                 const { data } = await ctx.ba.getDynamicList()
                 data.items.forEach(async (item, index) => {
                     try {
-                        const { pic, buffer } = await ctx.gi.generateDynamicImg(item)
-                        if (pic) await session.send(pic)
-                        else await session.send(h.image(buffer, 'image/png'))
+                        const msg = await ctx.biliRender.render(item)
+                        await session.send(msg)
                     } catch (e) {
                         console.log('无法处理第' + index + '个动态:', item, e)
                     }
