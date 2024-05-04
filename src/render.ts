@@ -380,24 +380,7 @@ class Render extends Service{
         return handler(data, forward)
     }
 
-    /**
-     * 绘制动态卡片
-     * @param data 动态数据
-     */
-    async render(data: DynamicItem): Promise<h.Fragment>{
-        const { module_author: authorModule, module_dynamic: dynamicModule, module_stat: statModule } = data.modules
-        const result = this.renderMajor(data, false)
-        if (result.error) {
-            return result.error
-        }
-        let cardUrl: string, cardColor: string
-        if (authorModule.decorate) {
-            cardUrl = authorModule.decorate.card_url
-            cardColor = authorModule.decorate.fan.color
-        }
-        const style = this.loadStyleText(cardColor, cardUrl)
-        const html = this.bundleHtml(data, result, style)
-
+    private async drawHtml(html: string){
         // 尝试生成图片
         let attempt = 3
         while(attempt > 0) {
@@ -415,6 +398,121 @@ class Render extends Service{
             }
         }
         throw new Error('生成图片失败')
+    }
+
+    /**
+     * 绘制动态卡片
+     * @param data 动态数据
+     */
+    async renderDynamic(data: DynamicItem): Promise<h.Fragment>{
+        const { module_author: authorModule, module_dynamic: dynamicModule, module_stat: statModule } = data.modules
+        const result = this.renderMajor(data, false)
+        if (result.error) {
+            return result.error
+        }
+        let cardUrl: string, cardColor: string
+        if (authorModule.decorate) {
+            cardUrl = authorModule.decorate.card_url
+            cardColor = authorModule.decorate.fan.color
+        }
+        const style = this.loadStyleText(cardColor, cardUrl)
+        const html = this.bundleHtml(data, result, style)
+
+        return await this.drawHtml(html)
+    }
+
+    async renderLive(data: LiveRoomInfo): Promise<h.Fragment>{
+        const fontURL = pathToFileURL(resolve(__dirname, 'font/HYZhengYuan-75W.ttf'))
+        let startTime = ''
+        let statuesText = ''
+        if(data.live_status === 0){
+            statuesText = '未开播'
+        } else if(data.live_status === 1){
+            const diff = Date.now() - data.live_time * 1000
+            // 计算开播时间，以人类理解的方式呈现
+            const status: string[] = ['直播中']
+            if(diff < 60 * 1000){
+                status.push('刚刚')
+            } else if(diff < 60 * 60 * 1000){
+                status.push(`${Math.floor(diff / 1000 / 60)}分钟前`)
+            } else {
+                status.push(`${Math.floor(diff / 1000 / 60 / 60)}小时前`)
+            }
+            startTime = this.unixTsToStr(data.live_time)
+            statuesText = status.join(' · ')
+        } else if(data.live_status === 2){
+            statuesText = '轮播中'
+        }
+        let cover = data.keyframe
+        if(data.cover_from_user && data.cover_from_user.length > 0){
+            cover = data.cover_from_user
+        }
+
+        const area = []
+        if(data.area_v2_name && data.area_v2_name.length > 0){
+            area.push(data.area_v2_name)
+        }
+        if(data.online >0){
+            area.push(`${data.online}人在看`)
+        }
+
+        const mainSection = `
+            <div class="card-video">
+                <div class="video-cover">
+                    <img src="${cover}" alt="">
+                    <div class="cover-mask"></div>
+                </div>
+                <div class="video-info">
+                    <div class="video-info-header">
+                        <div class="video-title">
+                            ${data.title}
+                        </div>
+
+                        <div class="video-introduction"> </div>
+                    </div>
+                    <div class="video-stat">
+                        <div class="video-stat-item">
+                            <span>${area.join(' · ')}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`
+
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>直播通知</title>
+            <style>
+                ${this.loadStyleText('', '')}
+            </style>
+        </head>
+        <body>
+            <div class="background">
+                <div ${this.conf.noBorder ? '' : 'class="base-plate"'}>
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- 主播头像 -->
+                            <img class="anchor-avatar"
+                                src="${data.face}"
+                                alt="主播头像">
+                            <div class="card-content">
+                                <div class="card-header">
+                                    <div class="up-info">
+                                        <div class="up-name">${data.uname}</div>
+                                        <div class="pub-time">${statuesText}</div>
+                                    </div>
+                                </div>
+                                <!-- 封面内容部分 -->
+                                ${mainSection}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>`
+        return await this.drawHtml(html)
     }
 
     private async renderByPage(html: string){

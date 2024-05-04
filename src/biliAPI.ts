@@ -8,7 +8,7 @@ import { DateTime } from "luxon"
 
 declare module 'koishi' {
     interface Context {
-        ba: BiliAPI
+        biliApi: BiliAPI
     }
 }
 
@@ -28,6 +28,8 @@ const GET_LIVE_ROOM_INFO = 'https://api.live.bilibili.com/room/v1/Room/get_info'
 const GET_MASTER_INFO = 'https://api.live.bilibili.com/live_user/v1/Master/info'
 const GET_TIME_NOW = 'https://api.bilibili.com/x/report/click/now'
 const GET_SERVER_UTC_TIME = 'https://interface.bilibili.com/serverdate.js'
+
+const GET_LIVE_ROOM_INFO_LIST = 'https://api.live.bilibili.com/room/v1/Room/get_status_info_by_uids'
 
 // Follow
 const IS_FOLLOW = "https://api.bilibili.com/x/relation"
@@ -52,8 +54,9 @@ class BiliAPI extends Service {
     log: Logger
 
     constructor(ctx: Context, config: BiliAPI.Config) {
-        super(ctx, 'ba')
+        super(ctx, 'biliApi')
         this.log = ctx.logger('BiliAPI')
+        this.log.info('开始加载')
         this.apiConfig = config
     }
 
@@ -63,7 +66,7 @@ class BiliAPI extends Service {
         // 从数据库加载cookies
         this.loadCookiesFromDatabase()
         // 输出日志
-        // this.logger.info('工作中')
+        this.log.info('工作中')
     }
 
     protected async get(url: string) {
@@ -136,6 +139,24 @@ class BiliAPI extends Service {
 
     async getFollowGroups() {
         return await this.get(GROUP_LIST) as BiliResp<FollowGroup[]>
+    }
+
+    async checkLivesByUids(uids: number[]) {
+        const { cookies } = await this.getLoginInfoFromDB()
+        let jct = cookies.find(cookie => {
+            return cookie.key === "bili_jct"
+        }).value
+        let payload = {
+            uids
+        }
+        this.log.debug(`>>>>>>>>>> Sending POST request to: ${GET_LIVE_ROOM_INFO_LIST}\n`, payload)
+        const {data} = await this.client.post(GET_LIVE_ROOM_INFO_LIST, payload, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        this.log.debug(`<<<<<<<<<< Received response:\n`, data)
+        return data as BiliResp<LiveRoomMap>
     }
 
     async createFollowGroup(name: string) {

@@ -26,8 +26,9 @@ export interface BiliSub{
 
 export interface BiliCheck{
     id: number
-    startTime: Date
-    endTime: Date
+    checkType: 'live' | 'dynamic'
+    startTime: Date     // 该检测开始时间
+    maxTime: Date       // 该检测获得的数据中最新的时间
     num_total: number
     num_followed: number
     num_filtered: number
@@ -72,8 +73,9 @@ export function apply(ctx: Context) {
     logger.info('扩展BiliSub表成功')
     ctx.model.extend('bili_check', {
         id: 'unsigned',
+        checkType: 'string',
         startTime: 'timestamp',
-        endTime: 'timestamp',
+        maxTime: 'timestamp',
         num_total: 'unsigned',
         num_followed: 'unsigned',
         num_filtered: 'unsigned',

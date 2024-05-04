@@ -1,10 +1,9 @@
 import { Context, ForkScope, Schema, Service } from 'koishi'
 import { } from '@koishijs/plugin-notifier'
-import ComRegister from './comRegister'
+import BiliCmd from './BiliCmd'
 import * as Database from './database'
 // import Service
 import Wbi from './wbi'
-import GenerateImg from './generateImg'
 import BiliAPI from './biliAPI'
 import Render from './render'
 
@@ -12,7 +11,7 @@ export const inject = ['puppeteer', 'database', 'notifier', 'cron']
 
 export const name = 'bilibili-notify'
 
-let globalConfig: Config
+let conf: Config
 
 declare module 'koishi' {
     interface Context {
@@ -24,7 +23,7 @@ export interface Config {
     api: BiliAPI.Config,
     wbi: Wbi.Config,
     render: Render.Config,
-    main: ComRegister.Config
+    main: BiliCmd.Config
 }
 
 export const Config: Schema<Config> = Schema.object({
@@ -35,7 +34,7 @@ export const Config: Schema<Config> = Schema.object({
     api: BiliAPI.Config,
 
     dynamic: Schema.object({}).description('推送设置'),
-    main: ComRegister.Config,
+    main: BiliCmd.Config,
 
     style: Schema.object({}).description('样式设置'),
     render: Render.Config,
@@ -51,12 +50,10 @@ class ServerManager extends Service {
         super(ctx, 'sm')
 
         // 插件运行相关指令
-        const sysCom = ctx.command('sys', 'bili-notify插件运行相关指令', { permissions: ['authority:5'] })
+        const sysCom = ctx.command('bilisys', 'bili-notify插件运行相关指令', { permissions: ['authority:5'] })
 
         sysCom
             .subcommand('.restart', '重启插件')
-            .usage('重启插件')
-            .example('sys restart')
             .action(async () => {
                 ctx.logger.info('调用sys restart指令')
                 if (await this.restartPlugin()) {
@@ -67,10 +64,8 @@ class ServerManager extends Service {
 
         sysCom
             .subcommand('.stop', '停止插件')
-            .usage('停止插件')
-            .example('sys stop')
             .action(async () => {
-                this.logger.info('调用sys stop指令')
+                ctx.logger.info('调用sys stop指令')
                 if (await this.disposePlugin()) {
                     return '插件已停止'
                 }
@@ -79,10 +74,8 @@ class ServerManager extends Service {
 
         sysCom
             .subcommand('.start', '启动插件')
-            .usage('启动插件')
-            .example('sys start')
             .action(async () => {
-                this.logger.info('调用sys start指令')
+                ctx.logger.info('调用sys start指令')
                 if (await this.registerPlugin()) {
                     return '插件启动成功'
                 }
@@ -95,24 +88,24 @@ class ServerManager extends Service {
         this.registerPlugin()
     }
 
-    registerPlugin = async () => {
+    async registerPlugin() {
         // 如果已经有服务则返回false
         if (this.servers.length !== 0) return false
         await new Promise(resolve => {
             // 注册插件
-            const ba = this.ctx.plugin(BiliAPI, globalConfig.api)
-            this.ctx.logger.debug('ba已加载')
-            const biliRender = this.ctx.plugin(Render, globalConfig.render)
-            this.ctx.logger.debug('biliRender已加载')
-            const wbi = this.ctx.plugin(Wbi, globalConfig.wbi)
-            this.ctx.logger.debug('wbi已加载')
-            const cr = this.ctx.plugin(ComRegister, globalConfig.main)
-            this.ctx.logger.debug('cr已加载')
+            const biliApi = this.ctx.plugin(BiliAPI, conf.api)
+            this.ctx.logger.info('biliApi已加载')
+            const biliRender = this.ctx.plugin(Render, conf.render)
+            this.ctx.logger.info('biliRender已加载')
+            const wbi = this.ctx.plugin(Wbi, conf.wbi)
+            this.ctx.logger.info('wbi已加载')
+            const biliCmd = this.ctx.plugin(BiliCmd, conf.main)
+            this.ctx.logger.info('biliCmd已加载')
             // 添加服务
-            this.servers.push(ba)
+            this.servers.push(biliApi)
             this.servers.push(biliRender)
             this.servers.push(wbi)
-            this.servers.push(cr)
+            this.servers.push(biliCmd)
             // 成功
             resolve('ok')
         })
@@ -120,7 +113,7 @@ class ServerManager extends Service {
         return true
     }
 
-    disposePlugin = async () => {
+    async disposePlugin() {
         // 如果没有服务则返回false
         if (this.servers.length === 0) return false
         // 遍历服务
@@ -136,7 +129,7 @@ class ServerManager extends Service {
         return true
     }
 
-    restartPlugin = async (count?: boolean /* 是否需要计数 */) => {
+    async restartPlugin (count?: boolean /* 是否需要计数 */){
         // 如果没有服务则返回false
         if (this.servers.length === 0) return false
         // 如果需要计数
@@ -162,21 +155,8 @@ class ServerManager extends Service {
 
 export function apply(ctx: Context, config: Config) {
     // 设置config
-    globalConfig = config
-    // 设置提示
-    ctx.notifier.create({
-        content: '请记得使用Auth插件创建超级管理员账号，没有权限将无法使用该插件提供的指令。'
-    })
-    // load database
+    conf = config
     ctx.plugin(Database)
     // Register ServerManager
     ctx.plugin(ServerManager)
-    // 当用户输入“恶魔兔，启动！”时，执行 help 指令
-    ctx.middleware((session, next) => {
-        if (session.content === '恶魔兔，启动！') {
-            return session.send('启动不了一点')
-        } else {
-            return next()
-        }
-    })
 }

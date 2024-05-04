@@ -157,3 +157,23 @@ interface DynamicDetail{
 interface OpusPicture{
     url: string
 }
+
+interface LiveRoomInfo {
+    title: string
+    room_id: number
+    online: number
+    live_time: number
+    live_status: 0 | 1 | 2 // 0: 未开播 1: 直播中 2: 轮播中
+    short_id: number
+    area_v2_name: string
+
+    uid: number
+    uname: string
+    face: string
+    cover_from_user: string
+    keyframe: string
+}
+
+interface LiveRoomMap{
+    [key: string]: LiveRoomInfo
+}
