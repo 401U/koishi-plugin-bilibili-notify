@@ -1,9 +1,10 @@
 {
-  "name": "koishi-plugin-bilibili-notify",
-  "description": "Koishi bilibili notify plugin",
-  "version": "1.2.14",
+  "name": "@401u/koishi-plugin-bilibili-notify",
+  "description": "Watch bilibili dynamic and notify to koishi",
+  "version": "2.0.0-beta.1",
   "contributors": [
-    "Akokko <admin@akokko.com>"
+    "Akokko <admin@akokko.com>",
+    "401U <hi@4o1.to>"
   ],
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -14,9 +15,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Akokk0/koishi-plugin-bilibili-notify"
+    "url": "git+https://github.com/401u/koishi-plugin-bilibili-notify.git"
   },
-  "homepage": "https://www.npmjs.com/package/koishi-plugin-bilibili-notify",
+  "homepage": "https://www.npmjs.com/package/@401u/koishi-plugin-bilibili-notify",
   "keywords": [
     "chatbot",
     "koishi",
@@ -49,14 +50,16 @@
       "required": [
         "database",
         "puppeteer",
-        "notifier"
+        "notifier",
+        "cron"
       ]
     },
     "description": {
-      "zh": "Bilibili动态推送，直播通知插件。具体使用方法请参考readme.md"
+      "zh": "重构的 bilibili-notify 插件，支持更多订阅数量"
     },
     "locales": [
       "zh"
-    ]
+    ],
+    "preview": true
   }
 }
