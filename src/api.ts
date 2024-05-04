@@ -56,8 +56,8 @@ class BiliAPI extends Service {
     constructor(ctx: Context, config: BiliAPI.Config) {
         super(ctx, 'biliApi')
         this.log = ctx.logger('BiliAPI')
-        this.log.info('开始加载')
         this.apiConfig = config
+        this.log.info('已加载')
     }
 
     protected start(): void | Promise<void> {
@@ -65,8 +65,6 @@ class BiliAPI extends Service {
         this.createNewClient()
         // 从数据库加载cookies
         this.loadCookiesFromDatabase()
-        // 输出日志
-        this.log.info('工作中')
     }
 
     protected async get(url: string) {

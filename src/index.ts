@@ -1,10 +1,10 @@
-import { Context, ForkScope, Schema, Service } from 'koishi'
+import { Context, ForkScope, Logger, Schema, Service } from 'koishi'
 import { } from '@koishijs/plugin-notifier'
-import BiliCmd from './biliCmd'
+import BiliCmd from './cmd'
 import * as Database from './database'
 // import Service
 import Wbi from './wbi'
-import BiliAPI from './biliAPI'
+import BiliAPI from './api'
 import Render from './render'
 
 export const inject = ['puppeteer', 'database', 'notifier', 'cron']
@@ -15,7 +15,7 @@ let conf: Config
 
 declare module 'koishi' {
     interface Context {
-        sm: ServerManager
+        biliDaemon: BiliDaemon
     }
 }
 
@@ -40,22 +40,22 @@ export const Config: Schema<Config> = Schema.object({
     render: Render.Config,
 })
 
-class ServerManager extends Service {
+class BiliDaemon extends Service {
     // 服务
     servers: ForkScope[] = []
     // 重启次数
     restartCount = 0
+    log: Logger
 
     constructor(ctx: Context) {
-        super(ctx, 'sm')
-
+        super(ctx, 'biliDaemon')
+        this.log = ctx.logger('BiliDaemon')
         // 插件运行相关指令
         const sysCom = ctx.command('bilisys', 'bili-notify插件运行相关指令', { permissions: ['authority:5'] })
 
         sysCom
             .subcommand('.restart', '重启插件')
             .action(async () => {
-                ctx.logger.info('调用sys restart指令')
                 if (await this.restartPlugin()) {
                     return '插件重启成功'
                 }
@@ -65,7 +65,6 @@ class ServerManager extends Service {
         sysCom
             .subcommand('.stop', '停止插件')
             .action(async () => {
-                ctx.logger.info('调用sys stop指令')
                 if (await this.disposePlugin()) {
                     return '插件已停止'
                 }
@@ -75,7 +74,6 @@ class ServerManager extends Service {
         sysCom
             .subcommand('.start', '启动插件')
             .action(async () => {
-                ctx.logger.info('调用sys start指令')
                 if (await this.registerPlugin()) {
                     return '插件启动成功'
                 }
@@ -93,18 +91,17 @@ class ServerManager extends Service {
         if (this.servers.length !== 0) return false
         await new Promise(resolve => {
             // 注册插件
-            const biliApi = this.ctx.plugin(BiliAPI, conf.api)
-            this.ctx.logger.info('biliApi已加载')
-            const biliRender = this.ctx.plugin(Render, conf.render)
-            this.ctx.logger.info('biliRender已加载')
+            this.log.info('开始加载')
+            const biliDB = this.ctx.plugin(Database)
             const wbi = this.ctx.plugin(Wbi, conf.wbi)
-            this.ctx.logger.info('wbi已加载')
+            const biliApi = this.ctx.plugin(BiliAPI, conf.api)
+            const biliRender = this.ctx.plugin(Render, conf.render)
             const biliCmd = this.ctx.plugin(BiliCmd, conf.main)
-            this.ctx.logger.info('biliCmd已加载')
             // 添加服务
+            this.servers.push(biliDB)
+            this.servers.push(wbi)
             this.servers.push(biliApi)
             this.servers.push(biliRender)
-            this.servers.push(wbi)
             this.servers.push(biliCmd)
             // 成功
             resolve('ok')
@@ -156,7 +153,6 @@ class ServerManager extends Service {
 export function apply(ctx: Context, config: Config) {
     // 设置config
     conf = config
-    ctx.plugin(Database)
     // Register ServerManager
-    ctx.plugin(ServerManager)
+    ctx.plugin(BiliDaemon)
 }

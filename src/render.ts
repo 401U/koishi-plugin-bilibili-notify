@@ -1,6 +1,7 @@
 import { Context, Logger, Schema, Service, h } from "koishi";
 import { resolve } from "path";
 import { pathToFileURL } from "url";
+import {} from 'koishi-plugin-puppeteer'
 
 declare module 'koishi' {
     interface Context {
@@ -24,9 +25,10 @@ class Render extends Service{
     log: Logger
     constructor(ctx: Context, config: Render.Config) {
         super(ctx, 'biliRender')
-        this.conf = config
         this.log = new Logger('BiliRender')
+        this.conf = config
         this.setupHandlers()
+        this.log.info('已加载')
     }
 
     /**

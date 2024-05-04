@@ -52,15 +52,12 @@ export function apply(ctx: Context) {
         bili_cookies: 'text',
         bili_refresh_token: 'text'
     })
-    logger.info('扩展LoginBili表成功')
-
     // 新增BiliUser表
     ctx.model.extend('bili_user', {
         uid: 'unsigned',
         uname: 'string',
         room_id: 'string'
     }, {unique: ['uid'], primary: 'uid'})
-    logger.info('扩展BiliUser表成功')
     // 新增BiliSub表
     ctx.model.extend('bili_sub', {
         uid: 'unsigned',
@@ -70,7 +67,6 @@ export function apply(ctx: Context) {
         filter: 'string',
         time: 'timestamp'
     }, {primary: ["uid", "channel"]})
-    logger.info('扩展BiliSub表成功')
     ctx.model.extend('bili_check', {
         id: 'unsigned',
         checkType: 'string',
@@ -81,5 +77,5 @@ export function apply(ctx: Context) {
         num_filtered: 'unsigned',
         num_sent: 'unsigned'
     }, {autoInc: true})
-    logger.info('扩展BiliCheck表成功')
+    logger.info('已加载')
 }

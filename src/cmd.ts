@@ -3,12 +3,11 @@ import { Notifier } from "@koishijs/plugin-notifier";
 import { } from '@koishijs/plugin-help'
 // 导入qrcode
 import QRCode from 'qrcode'
-import Jimp from 'jimp'
 import {} from 'koishi-plugin-cron'
 
 
 class BiliCmd {
-    static inject = ['biliApi' , 'wbi', 'database', 'sm', 'cron', 'biliRender'];
+    static inject = ['biliApi', 'wbi', 'database', 'biliDaemon', 'cron', 'biliRender'];
     log: Logger;
     conf: BiliCmd.Config
     loginTimer: Function
@@ -21,7 +20,6 @@ class BiliCmd {
 
     constructor(ctx: Context, config: BiliCmd.Config) {
         this.log = ctx.logger('BiliCmd')
-        this.log.info('开始加载')
         this.conf = config
         // 从数据库获取订阅
         this.checkIfLoginInfoIsLoaded(ctx).then(() => {
@@ -38,10 +36,11 @@ class BiliCmd {
             this.checkDynamic(ctx)
         })
         ctx.cron(this.conf.liveCheckCron, () => {
-            this.log.info('直播监测开始')
+            this.log.debug('直播监测开始')
             this.checkLive(ctx)
         })
         this.log.debug('cron任务加载完毕')
+        this.log.info('已加载')
     }
 
     /**
@@ -147,7 +146,7 @@ class BiliCmd {
                 liveInfos
                     .filter(item=>item.live_status === 1)
                     .map(item => {
-                        this.log.info(`检测到进行中直播${item.title}@${item.room_id}, 直播开始：${new Date(item.live_time*1000)}`)
+                        this.log.debug(`检测到进行中直播${item.title}@${item.room_id}, 直播开始：${new Date(item.live_time*1000)}`)
                         return item
                     })
                     .filter(item =>{
@@ -156,7 +155,7 @@ class BiliCmd {
                             && item.live_time > Math.floor(prevMaxTime.getTime()/1000)
                     })
                     .forEach(async item => {
-                        this.log.info(`应推送直播${item.title}@${item.room_id}`)
+                        this.log.debug(`应推送直播${item.title}@${item.room_id}`)
                         const msg = await ctx.biliRender.renderLive(item)
                         // 查询该roomid对应的订阅channel
                         const targets = (await ctx.database.get('bili_sub', {uid: item.uid, live: {$eq:1}})).map(row=>row.channel)
@@ -172,11 +171,8 @@ class BiliCmd {
     private async initBiliCmd(ctx: Context) {
         const biliCom = ctx.command('bili', 'bili-notify插件相关指令', { permissions: ['authority:3'] })
         
-        biliCom.subcommand('.login', '登录B站之后才可以进行之后的操作')
-            .usage('使用二维码登录，登录B站之后才可以进行之后的操作')
-            .example('bili login')
+        biliCom.subcommand('.login', '使用二维码登录')
             .action(async ({ session }) => {
-                this.log.info('调用bili login指令')
                 // 获取二维码
                 let content: any
                 try {
@@ -440,7 +436,7 @@ class BiliCmd {
         } catch (e) {
             this.log.error(e.message)
         } finally {
-            this.log.info('设置关注分组为：' + this.followGroup)
+            this.log.debug('初始化关注分组id为' + this.followGroup)
         }
     }
 
@@ -459,28 +455,24 @@ class BiliCmd {
         
         const testCom = ctx.command('btest', { hidden: true })
 
-        testCom.subcommand('.cookies')
-            .usage('测试指令，用于测试从数据库读取cookies')
+        testCom.subcommand('.cookies', '从数据库读取cookies')
             .action(async () => {
-                this.log.info('调用test cookies指令')
-                // await ctx.biliApi.loadCookiesFromDatabase()
                 console.log(JSON.parse(ctx.biliApi.getCookies()));
             })
 
-        testCom.subcommand('.mvg <uid:number>')
-            .action(async ({session}, uid) => {
+        testCom.subcommand('.mvg <uid:number>', '将该用户移动到配置好的关注分组中')
+            .action(async ({}, uid) => {
                 const resp = await ctx.biliApi.cpToGroup([uid], [this.followGroup])
                 return JSON.stringify(resp)
             })
         testCom.subcommand('.delg <uid:number>')
-            .action(async ({session}, uid) => {
+            .action(async ({}, uid) => {
                 const resp = await ctx.biliApi.delFromGroup([uid])
                 return JSON.stringify(resp)
             })
         
-        testCom.subcommand('.checkSub <uid:number>')
-            .usage('测试指令，用于测试检查用户是否被订阅')
-            .action(async ({session}, uid) => {
+        testCom.subcommand('.checkSub <uid:number>', '检查该用户订阅状态')
+            .action(async ({}, uid) => {
                 const resp = await ctx.biliApi.checkFollow(uid)
                 switch(resp.data.attribute){
                     case 0: return '未订阅'
@@ -491,65 +483,52 @@ class BiliCmd {
                 }
             })
         
-        testCom.subcommand('.sub <uid:number>')
-            .usage('测试指令，用于测试订阅用户')
-            .action(async ({session}, uid) => {
+        testCom.subcommand('.sub <uid:number>', '直接关注B站用户')
+            .action(async ({}, uid) => {
                 const resp = await ctx.biliApi.followUser(uid)
                 return JSON.stringify(resp)
             })
 
-        testCom.subcommand('.unsub <uid:number>')
-            .usage('测试指令，用于测试取消订阅用户')
+        testCom.subcommand('.unsub <uid:number>', '取消关注B站用户')
             .action(async ({session}, uid) => {
                 const resp = await ctx.biliApi.unfollowUser(uid)
                 return JSON.stringify(resp)
             })
-        testCom.subcommand('.followGroups')
+        testCom.subcommand('.followGroups', '获取关注分组列表')
             .action(async () => {
                 const resp = await ctx.biliApi.getFollowGroups()
                 return resp.data.map(g=>`${g.tagid}：${g.name}`).join('\n')
             })
 
         testCom
-            .subcommand('.my')
-            .usage('测试指令，用于测试获取自己信息')
-            .example('test.my')
+            .subcommand('.my', '获取自己B站信息')
             .action(async () => {
                 const content = await ctx.biliApi.getMyselfInfo()
                 return JSON.stringify(content)
             })
 
         testCom
-            .subcommand('.user <mid:number>')
-            .usage('测试指令，用于测试获取用户信息')
-            .example('test.user 用户UID')
+            .subcommand('.user <mid:number>', '获取用户B站信息')
             .action(async (_, mid) => {
                 const content = await ctx.biliApi.getUserInfo(mid)
                 return JSON.stringify(content)
             })
 
-        testCom.subcommand('.live <uid:number>')
-            .usage('测试指令，用于测试获取直播信息')
-            .action(async ({session}, uid) => {
+        testCom.subcommand('.live <uid:number>', '获取用户直播信息')
+            .action(async ({}, uid) => {
                 const content = await ctx.biliApi.checkLivesByUids([uid])
                 return await ctx.biliRender.renderLive(content.data[uid])
             })
 
         testCom
-            .subcommand('.time')
-            .usage('测试时间接口')
-            .example('test.time')
-            .action(async ({ session }) => {
+            .subcommand('.time','测试时间接口')
+            .action(async () => {
                 return JSON.stringify(await ctx.biliApi.getTimeNow())
             })
 
         testCom
-            .subcommand('.gimg <uid:string> <index:number>')
-            .usage('测试图片生成')
-            .example('test.gimg')
+            .subcommand('.space <uid:string> <index:number>', '获取特定B站用户空间动态的特定条目')
             .action(async ({ session }, uid, index) => {
-                // logger
-                this.log.info('调用test gimg指令')
                 // 获取用户空间动态数据
                 const { data } = await ctx.biliApi.getUserSpaceDynamic(uid)
                 this.log.info('获取到动态数据\n' + JSON.stringify(data.items[index], null, '  '))
@@ -558,60 +537,23 @@ class BiliCmd {
                 await session.send(msg)
             })
         
-        testCom.subcommand('.detail <did:string>')
-            .usage('测试获取动态详情')
+        testCom.subcommand('.detail <did:string>', '获取指定动态的信息')
             .action(async ({ session }, did) => {
                 const { data } = await ctx.biliApi.getDynamicDetail(did)
                 await session.send("动态类型：" + data.item.type)
-                this.log.info("获取到动态类型\n" + JSON.stringify(data.item, null, '  '))
+                this.log.info("获取到动态数据\n" + JSON.stringify(data.item, null, '  '))
                 const msg = await ctx.biliRender.renderDynamic(data.item)
                 await session.send(msg)
             })
 
         testCom
-            .subcommand('.group')
-            .usage('查看session groupId')
-            .example('test group')
-            .action( async ({ session }) => {
-                session.send(session.event.guild.id)
-            })
-
-        testCom
-            .subcommand('.utc')
-            .usage('获取当前UTC+8 Unix时间戳')
-            .example('test utc')
+            .subcommand('.utc', '获取当前时间戳')
             .action(async ({ session }) => {
                 session.send((await ctx.biliApi.getServerUTCTime()).toString())
             })
 
-        testCom
-            .subcommand('.livestop <uid:number>', '发送下播提示语测试')
-            .usage('发送下播提示语测试')
-            .example('test livestop')
-            .action(async ({ session }, uid) => {
-                // logger
-                this.log.info('调用test gimg指令')
-                // 获取主播信息
-                const { data } = await ctx.biliApi.getMasterInfo(uid)
-                let resizedImage: Buffer
-                try {
-                    resizedImage = await Jimp.read(data.info.face).then(async image => {
-                        return await image.resize(100, 100).getBufferAsync(Jimp.MIME_PNG)
-                    })
-                } catch (e) {
-                    if (e.message === 'Unsupported MIME type: image/webp') console.log('主播使用的是webp格式头像，无法进行渲染');
-                    else console.log(e);
-                }
-                // 发送下播提示语
-                await session.send(
-                    resizedImage ? h.image(resizedImage, 'image/png'):''
-                    + '主播' + data.info.uname + '已下播'
-                )
-            })
-
-        testCom.subcommand('.subs', '发送己方关注列表近期更新')
+        testCom.subcommand('.subs', '获取动态页面最新一页')
             .action(async ({ session }) => {
-                this.log.info('调用test gimg指令')
                 const { data } = await ctx.biliApi.getDynamicList()
                 data.items.forEach(async (item, index) => {
                     try {
@@ -624,27 +566,12 @@ class BiliCmd {
             })
 
         testCom
-            .subcommand('.send <content:string>', '测试发送消息')
+            .subcommand('.send <content:string>', '向主人账号发送消息')
             .usage('测试发送消息方法')
             .example('test sendmsg')
             .action(async ({ session }, content) => {
                 // 获得对应bot
                 this.sendToMaster(ctx, content)
-            })
-        
-
-        testCom
-            .subcommand('.bot', '查询当前拥有的机器人信息', { hidden: true })
-            .usage('查询当前拥有的机器人信息')
-            .example('bili bot 查询当前拥有的机器人信息')
-            .action(() => {
-                this.log.info('开始输出BOT信息')
-                ctx.bots.forEach(bot => {
-                    this.log.info('--------------------------------')
-                    this.log.info('平台：' + bot.platform)
-                    this.log.info('名称：' + bot.user.name)
-                    this.log.info('--------------------------------')
-                })
             })
     }
 
@@ -668,7 +595,7 @@ class BiliCmd {
     async sendPrivateMsgAndRebootService(ctx: Context, bot: Bot<Context>, content: string) {
         await this.sendToMaster(ctx, content)
         // 重启插件
-        const flag = await ctx.sm.restartPlugin(true /* 非人为重启，需要计数 */)
+        const flag = await ctx.biliDaemon.restartPlugin(true /* 非人为重启，需要计数 */)
         // 判断是否重启成功
         if (flag) {
             this.log.info('重启插件成功')
@@ -678,7 +605,7 @@ class BiliCmd {
             // 重启失败，发送消息
             await this.sendToMaster(ctx, '已重启插件三次，请检查机器人状态后手动重启')
             // 关闭插件
-            await ctx.sm.disposePlugin()
+            await ctx.biliDaemon.disposePlugin()
         }
     }
 
