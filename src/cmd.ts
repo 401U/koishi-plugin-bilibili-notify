@@ -7,7 +7,7 @@ import {} from 'koishi-plugin-cron'
 
 declare module 'koishi' {
     interface Context {
-        broadcast?: (channel: string[], content: h.Fragment) => Promise<void>;
+        broadcast?: (channel: string[], content: h.Fragment) => Promise<string[]>;
     }
 }
 
@@ -432,6 +432,13 @@ class BiliCmd {
                 }
                 await session.send(`订阅了${userData.info.uname} ${subType.join('和')}通知`)
             })
+        biliCom.subcommand('.notify', '确认当前频道是否支持通知')
+            .action(async ({session}) => {
+                const channel = `${session.platform}:${session.channelId}`
+                await session.send(`当前频道：${channel}`)
+                const missed = await this.broadcast(ctx, [channel], '这是通知消息')
+                await session.send(`当前频道${missed.length>0 ? '' : '不'}支持发送通知`)
+            })
     }
 
     /**
@@ -600,11 +607,12 @@ class BiliCmd {
 
     private async broadcast(ctx: Context, channel: string[], content: h.Fragment) {
         if (ctx.broadcast){
-            await ctx.broadcast(channel, content)
+            return await ctx.broadcast(channel, content)
         } else if(ctx.database.broadcast){
-            await ctx.database.broadcast(channel, content)
+            return await ctx.database.broadcast(channel, content)
         } else {
-            console.log('无法发送广播')
+            this.log.error('无法发送广播')
+            return channel
         }
     }
 
