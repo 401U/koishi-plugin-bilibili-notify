@@ -24,6 +24,9 @@
     "plugin",
     "bilibili"
   ],
+  "scripts": {
+    "build": "atcs -b"
+  },
   "peerDependencies": {
     "koishi": "^4.17.5"
   },
@@ -42,8 +45,12 @@
     "@types/md5": "^2",
     "@types/qrcode": "^1",
     "@types/tough-cookie": "^4",
+    "@koishijs/plugin-notifier": "^1.2.0",
+    "@koishijs/plugin-help": "^2.4.3",
     "koishi-plugin-cron": "^3.1.0",
-    "koishi-plugin-puppeteer": "^3.8.4"
+    "koishi-plugin-puppeteer": "^3.8.4",
+    "koishi": "^4.17.5",
+    "atsc": "^1.2.2"
   },
   "koishi": {
     "service": {
