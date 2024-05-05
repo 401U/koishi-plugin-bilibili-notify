@@ -175,7 +175,7 @@ class BiliCmd {
     private async initBiliCmd(ctx: Context) {
         const biliCom = ctx.command('bili', 'bili-notify插件相关指令', { permissions: ['authority:3'] })
         
-        biliCom.subcommand('.login', '使用二维码登录B站')
+        biliCom.subcommand('.login', '使用二维码登录B站', { permissions: ['authority:4'] } )
             .alias('auth')
             .action(async ({ session }) => {
                 // 获取二维码
@@ -258,34 +258,51 @@ class BiliCmd {
             .usage('取消订阅，不指定类型时将取消全部订阅')
             .option('live', '-l 取消直播订阅')
             .option('dynamic', '-d 取消动态订阅')
+            .option('target', '-t <target:string>需要取消订阅的频道, 多个频道用英文逗号分隔，不指定则仅限当前频道', {permissions: ['authority:4']})
             .action(async ({ session, options }, uid) => {
-                // 查数据库获取当前订阅状态
-                const channel = `${session.event.platform}:${session.event.channel.id}`
-                const data = await ctx.database.get('bili_sub', { uid, channel })
-                if(data.length === 0) return '未订阅该UP主'
                 const noSpec = options.live === undefined && options.dynamic === undefined
                 const unsubLive = noSpec ? true : options.live===true // 是否应该取消订阅直播
                 const unsubDynamic = noSpec ? true : options.dynamic===true // 是否应该取消订阅动态
 
-                let subdata = data[0]
-                subdata.live = (subdata.live && !unsubLive) ? 1 : 0
-                subdata.dynamic = (subdata.dynamic && !unsubDynamic) ? 1 : 0
-                if (subdata.live === 0 && subdata.dynamic === 0) { // 如果两者均未订阅，删除数据库中的该条信息
-                    ctx.database.remove('bili_sub', {
-                        uid,
-                        channel
-                    })
-                    await this.checkUnsubUser(ctx, uid) // 同时检查该用户是否也应从订阅表中删除
-                } else {
-                    await ctx.database.set('bili_sub', {
-                        uid, channel
-                    }, {
-                        live: subdata.live,
-                        dynamic: subdata.dynamic,
-                        time: new Date()
+                // 查数据库获取当前订阅状态
+                const currChannel = `${session.event.platform}:${session.event.channel.id}`
+                const channels: string[] = []
+                if(options.target){
+                    if(options.target.length === 0) return '指定取消订阅的频道无效'
+                    options.target.split(',').filter(item=>item.length>0).forEach(item => {
+                        channels.push(item)
                     })
                 }
-                return `已${unsubLive ? '取消' : ''}订阅直播，${unsubDynamic ? '取消' : ''}订阅动态`
+                if(channels.length === 0) channels.push(currChannel)
+                
+                const unsubState = []
+                if(unsubLive) unsubState.push('直播')
+                if(unsubDynamic) unsubState.push('动态')
+                const unsubText = '已取消订阅'+unsubState.join('和')+'通知'
+                channels.map(async channel => {
+                    const prefix = (currChannel === channel ? '当前频道' : '频道' + channel)
+                    const subInfo = await ctx.database.get('bili_sub', { uid, channel })
+                    if (subInfo.length === 0) return prefix+'未订阅该UP主'
+                    const subdata = subInfo[0]
+                    subdata.live = (subdata.live && !unsubLive) ? 1 : 0
+                    subdata.dynamic = (subdata.dynamic && !unsubDynamic) ? 1 : 0
+                    if (!subdata.live && !subdata.dynamic) { // 如果两者均未订阅，删除数据库中的该条信息
+                        ctx.database.remove('bili_sub', {
+                            uid,
+                            channel
+                        })
+                    } else {
+                        await ctx.database.set('bili_sub', {
+                            uid, channel
+                        }, {
+                            live: subdata.live,
+                            dynamic: subdata.dynamic,
+                            time: new Date()
+                        })
+                    }
+                    return prefix + unsubText
+                }).forEach(async text => await session.send(await text))
+                await this.checkUnsubUser(ctx, uid) // 同时检查该用户是否也应从订阅表中删除
             })
 
         biliCom.subcommand('.list', '列出订阅目标')
@@ -315,7 +332,7 @@ class BiliCmd {
             .usage('不指定类型时，将订阅全部通知\n在目标频道已有订阅时，再次订阅将覆盖原有设置')
             .option('live', '-l 订阅直播通知')
             .option('dynamic', '-d 订阅动态通知')
-            .option('target', '-t <target:string> 订阅到的目标频道，多个频道需用英文逗号隔开，不指定则默认为当前频道，需权限等级4', {authority: 4})
+            .option('target', '-t <target:string> 订阅到的目标频道，多个频道需用英文逗号隔开，不指定则默认为当前频道', { permissions: ['authority:4'] })
             .action(async ({ session, options }, uid) => {
                 if(options.dynamic===false && options.live===false) {
                     return '请至少启用一个订阅类型; 取消订阅请参考bili.unsub指令'
