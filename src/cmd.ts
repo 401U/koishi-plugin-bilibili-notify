@@ -176,7 +176,7 @@ class BiliCmd {
         const biliCom = ctx.command('bili', 'bili-notify插件相关指令', { permissions: ['authority:3'] })
         
         biliCom.subcommand('.login', '使用二维码登录B站', { permissions: ['authority:4'] } )
-            .alias('auth')
+            .alias('.auth')
             .action(async ({ session }) => {
                 // 获取二维码
                 let content: any
