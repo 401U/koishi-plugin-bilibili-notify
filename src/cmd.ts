@@ -17,7 +17,6 @@ class BiliCmd {
     conf: BiliCmd.Config
     loginTimer: Function
     subNotifier: Notifier
-    num: number
     /**
      * 关注分组
      */
@@ -176,7 +175,7 @@ class BiliCmd {
     private async initBiliCmd(ctx: Context) {
         const biliCom = ctx.command('bili', 'bili-notify插件相关指令', { permissions: ['authority:3'] })
         
-        biliCom.subcommand('.login', '使用二维码登录')
+        biliCom.subcommand('.login', '使用二维码登录B站')
             .action(async ({ session }) => {
                 // 获取二维码
                 let content: any
@@ -186,7 +185,7 @@ class BiliCmd {
                     return 'bili login getLoginQRCode() 本次网络请求失败'
                 }
                 // 判断是否出问题
-                if (content.code !== 0) return await session.send('出问题咯，请联系管理员解决')
+                if (content.code !== 0) return await session.send('登录出现问题，请联系管理员解决')
                 // 生成二维码
                 QRCode.toBuffer(content.data.url,
                     {
@@ -254,31 +253,30 @@ class BiliCmd {
             })
 
         biliCom
-            .subcommand('.unsub <uid:number>', '取消订阅UP主动态、直播或全部')
-            .usage('取消订阅，加-l为取消直播订阅，加-d为取消动态订阅，什么都不加则为全部取消')
-            .option('live', '-l')
-            .option('dynamic', '-d')
-            .example('bili unsub 用户UID -ld')
+            .subcommand('.unsub <uid:number>', '取消订阅UP主')
+            .usage('取消订阅，不指定类型时将取消全部订阅')
+            .option('live', '-l 取消直播订阅')
+            .option('dynamic', '-d 取消动态订阅')
             .action(async ({ session, options }, uid) => {
                 // 查数据库获取当前订阅状态
-                let channel = `${session.event.platform}:${session.event.channel.id}`
-                let data = await ctx.database.get('bili_sub', { uid, channel })
+                const channel = `${session.event.platform}:${session.event.channel.id}`
+                const data = await ctx.database.get('bili_sub', { uid, channel })
                 if(data.length === 0) return '未订阅该UP主'
-                let noSpec = options.live === null && options.dynamic === null
-                let unsubLive = noSpec ? true : options.live===true // 是否应该取消订阅直播
-                let unsubDynamic = noSpec ? true : options.dynamic===true // 是否应该取消订阅动态
+                const noSpec = options.live === undefined && options.dynamic === undefined
+                const unsubLive = noSpec ? true : options.live===true // 是否应该取消订阅直播
+                const unsubDynamic = noSpec ? true : options.dynamic===true // 是否应该取消订阅动态
 
                 let subdata = data[0]
                 subdata.live = (subdata.live && !unsubLive) ? 1 : 0
                 subdata.dynamic = (subdata.dynamic && !unsubDynamic) ? 1 : 0
-                if (!subdata.live && !subdata.dynamic) { // 如果两者均未订阅，删除数据库中的该条信息
+                if (subdata.live === 0 && subdata.dynamic === 0) { // 如果两者均未订阅，删除数据库中的该条信息
                     ctx.database.remove('bili_sub', {
                         uid,
                         channel
                     })
                     await this.checkUnsubUser(ctx, uid) // 同时检查该用户是否也应从订阅表中删除
                 } else {
-                    ctx.database.set('bili_sub', {
+                    await ctx.database.set('bili_sub', {
                         uid, channel
                     }, {
                         live: subdata.live,
@@ -286,10 +284,11 @@ class BiliCmd {
                         time: new Date()
                     })
                 }
+                return `已${unsubLive ? '取消' : ''}订阅直播，${unsubDynamic ? '取消' : ''}订阅动态`
             })
 
         biliCom
-            .subcommand('.list', '列出订阅对象')
+            .subcommand('.list', '列出订阅目标')
             .action(async ({ session }) => {
                 let channel = `${session.event.platform}:${session.event.channel.id}`
                 let reply = channel + '的订阅列表：\n'
@@ -310,27 +309,31 @@ class BiliCmd {
             })
 
         biliCom
-            .subcommand('.sub <mid:number> [...targets:string]', '订阅B站用户动态和直播通知')
-            .option('live', '-l 订阅直播')
-            .option('dynamic', '-d 订阅动态')
-            .usage('订阅用户动态和直播通知，若需要订阅直播请加上-l，需要订阅动态则加上-d。若没有加任何参数，之后会向你单独询问，尖括号中为必选参数，中括号为可选参数，目标群号若不填，则默认为当前群聊')
-            .example('bili sub 1194210119 目标频道 -l -d 订阅UID为1194210119的UP主的动态和直播')
-            .action(async ({ session, options }, mid, ...targets) => {
+            .subcommand('.sub <uid:number>', '订阅B站用户')
+            .usage('不指定类型时，将订阅全部通知\n在目标频道已有订阅时，再次订阅将覆盖原有设置')
+            .option('live', '-l 订阅直播通知')
+            .option('dynamic', '-d 订阅动态通知')
+            .option('target', '-t <target:string> 订阅到的目标频道，多个频道需用英文逗号隔开，不指定则默认为当前频道，需权限等级4', {authority: 4})
+            .action(async ({ session, options }, uid) => {
+                if(options.dynamic===false && options.live===false) {
+                    return '请至少启用一个订阅类型; 取消订阅请参考bili.unsub指令'
+                }
+                const noSpec = options.live ===undefined && options.dynamic === undefined
+                const subLive = noSpec ? true : options.live===true // 是否应该订阅直播
+                const subDynamic = noSpec ? true : options.dynamic===true // 是否应该订阅动态
+
+                const targets = (options.target ? options.target : '').split(',').filter(item=>item.length>0)
                 // 检查是否登录
                 if (!(await this.checkIfIsLogin(ctx))) {
                     // 未登录直接返回
                     return '请使用指令bili login登录后再进行订阅操作'
                 }
-                // TODO 如果尝试为其他频道订阅，需要更高权限
-                if (targets.length !== 0 && !ctx.permissions.test(['authority:4'], session)) {
-                    return '没有权限订阅其他频道'
-                }
                 // 检查必选参数是否有值
-                if (!mid) return '请输入用户uid'
+                if (!uid) return '请输入用户uid'
                 // 获取用户信息
                 let content: any
                 try {
-                    content = await ctx.biliApi.getUserInfo(mid)
+                    content = await ctx.biliApi.getUserInfo(uid)
                 } catch (e) {
                     return '未能获取用户信息：' + e.message
                 }
@@ -362,57 +365,53 @@ class BiliCmd {
                 }
                 // 获取data
                 const { data } = content
-                // 判断是否未订阅任何消息
-                if (!options.live && !options.dynamic) {
-                    return '您未订阅该UP的任何消息'
-                }
                 // 将该用户移动到关注分组
-                ctx.biliApi.checkFollow(mid).then(async (data) => {
+                ctx.biliApi.checkFollow(uid).then(async (data) => {
                     const followed = [2,6].includes(data.data.attribute)
                     if (!followed) {
-                        await ctx.biliApi.followUser(mid)
+                        await ctx.biliApi.followUser(uid)
                     }
-                    await ctx.biliApi.cpToGroup([mid], [this.followGroup])
+                    await ctx.biliApi.cpToGroup([uid], [this.followGroup])
                 })
                 // 获取直播房间号
-                let roomId = data.live_room?.roomid.toString()
+                const roomId = data.live_room?.roomid.toString()
                 // 保存到数据库中
                 await ctx.database.upsert('bili_user', [{
-                    uid: mid,
+                    uid: uid,
                     room_id: roomId,
                 }], 'uid')
-                let subRows = targetChannels.map((channel: string) => {return {
-                    uid: mid,
+                const subRows = targetChannels.map((channel: string) => {return {
+                    uid: uid,
                     channel,
-                    live: options.live ? 1 : 0,
-                    dynamic: options.dynamic ? 1 : 0,
+                    live: subLive ? 1 : 0,
+                    dynamic: subDynamic ? 1 : 0,
                     time: new Date(),
                 }})
                 await ctx.database.upsert('bili_sub', subRows, ['uid', 'channel'])
                 // 获取用户信息
                 let userData: any
                 try {
-                    const { data } = await ctx.biliApi.getMasterInfo(mid)
+                    const { data } = await ctx.biliApi.getMasterInfo(uid)
                     userData = data
                 } catch (e) {
                     this.log.error('bili sub指令 getMasterInfo() 发生了错误，错误为：' + e.message)
                     return '订阅出错啦，请重试'
                 }
                 await ctx.database.set('bili_user', {
-                    uid: mid
+                    uid: uid
                 }, {
                     uname: userData.info.uname
                 })
                 // 需要订阅直播
                 let subType = []
-                if (options.live) {
+                if (subLive) {
                     subType.push('直播')
                 }
                 // 需要订阅动态
-                if (options.dynamic) {
+                if (subDynamic) {
                     subType.push('动态')
                 }
-                await session.send(`订阅了${userData.info.uname} ${subType.join('和')} 通知`)
+                await session.send(`订阅了${userData.info.uname} ${subType.join('和')}通知`)
             })
     }
 
