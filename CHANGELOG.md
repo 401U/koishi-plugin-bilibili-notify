@@ -2,6 +2,13 @@
 
 所有变更应记录到此文档
 
+## [2.0.1](https://github.com/401U/koishi-plugin-bilibili-notify/compare/v2.0.0...v2.0.1) (2024-05-05)
+
+
+### Miscellaneous Chores
+
+* release 2.0.1 ([3875ffe](https://github.com/401U/koishi-plugin-bilibili-notify/commit/3875ffeadea6f42fdfc8a52d5ab9ae25c715f3c2))
+
 ## [2.0.0](https://github.com/401U/koishi-plugin-bilibili-notify/compare/v2.0.0-beta.1...v2.0.0) (2024-05-05)
 
 
