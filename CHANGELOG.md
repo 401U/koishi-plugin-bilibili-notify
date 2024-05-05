@@ -2,6 +2,13 @@
 
 所有变更应记录到此文档
 
+## [2.0.2](https://github.com/401U/koishi-plugin-bilibili-notify/compare/v2.0.1...v2.0.2) (2024-05-05)
+
+
+### Bug Fixes
+
+* 修复了错误的指令别名 ([97a8204](https://github.com/401U/koishi-plugin-bilibili-notify/commit/97a82046279063336a50c472a2584566f0780d0f))
+
 ## [2.0.1](https://github.com/401U/koishi-plugin-bilibili-notify/compare/v2.0.0...v2.0.1) (2024-05-05)
 
 
