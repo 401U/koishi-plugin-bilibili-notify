@@ -258,7 +258,7 @@ class BiliCmd {
             .usage('取消订阅，不指定类型时将取消全部订阅')
             .option('live', '-l 取消直播订阅')
             .option('dynamic', '-d 取消动态订阅')
-            .option('target', '-t <target:string>需要取消订阅的频道, 多个频道用英文逗号分隔，不指定则仅限当前频道', {permissions: ['authority:4']})
+            .option('target', '-t <target:string> 需要取消订阅的频道, 多个频道用英文逗号分隔，不指定则仅限当前频道', {permissions: ['authority:4']})
             .action(async ({ session, options }, uid) => {
                 const noSpec = options.live === undefined && options.dynamic === undefined
                 const unsubLive = noSpec ? true : options.live===true // 是否应该取消订阅直播
@@ -306,23 +306,24 @@ class BiliCmd {
             })
 
         biliCom.subcommand('.list', '列出订阅目标')
+            .option('target', '-t <target:string> 需要列出订阅的频道, 不指定则为当前频道', {permissions: ['authority:4']})
             .alias('.ls')
-            .action(async ({ session }) => {
-                let channel = `${session.event.platform}:${session.event.channel.id}`
-                let reply = channel + '的订阅列表：\n'
+            .action(async ({ session, options }) => {
+                const channel = options.target || `${session.event.platform}:${session.event.channel.id}`
+                let reply = options.target? '频道'+channel : '当前频道'
                 ctx.database.join(['bili_sub', 'bili_user'], (bili_sub, bili_user) => 
                      $.and(
                         $.eq(bili_sub.uid, bili_user.uid),
                         $.eq(bili_sub.channel, channel)
                     )
                 ).execute().then(async data => {
-                    if (data.length === 0) reply = '还没有订阅哦'
-                    else reply = `共有${data.length}个订阅：\n` + data.map(item => 
-                        `- ${item.bili_sub.uid}@${item.bili_user.room_id} ${item.bili_sub.live ? '直播' : ''} ${item.bili_sub.dynamic ? '动态' : ''}`
+                    if (data.length === 0) reply += '还没有订阅哦'
+                    else reply += `共有${data.length}个订阅：\n` + data.map(item => 
+                        `- ${item.bili_user.uname}@${item.bili_user.uid} ${item.bili_sub.live ? '直播' : ''} ${item.bili_sub.dynamic ? '动态' : ''}`
                     ).join('\n')
                     await session.send(reply)
                 }).catch(err => {
-                    console.log(err)
+                    this.log.error(err)
                 })
             })
 
