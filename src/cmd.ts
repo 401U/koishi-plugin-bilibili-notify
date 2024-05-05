@@ -176,6 +176,7 @@ class BiliCmd {
         const biliCom = ctx.command('bili', 'bili-notify插件相关指令', { permissions: ['authority:3'] })
         
         biliCom.subcommand('.login', '使用二维码登录B站')
+            .alias('auth')
             .action(async ({ session }) => {
                 // 获取二维码
                 let content: any
@@ -252,8 +253,8 @@ class BiliCmd {
                 }, 1000)
             })
 
-        biliCom
-            .subcommand('.unsub <uid:number>', '取消订阅UP主')
+        biliCom.subcommand('.unsub <uid:number>', '取消订阅UP主')
+            .alias('.del', '.delete', '.rm', '.remove', '.unsubscribe')
             .usage('取消订阅，不指定类型时将取消全部订阅')
             .option('live', '-l 取消直播订阅')
             .option('dynamic', '-d 取消动态订阅')
@@ -287,8 +288,8 @@ class BiliCmd {
                 return `已${unsubLive ? '取消' : ''}订阅直播，${unsubDynamic ? '取消' : ''}订阅动态`
             })
 
-        biliCom
-            .subcommand('.list', '列出订阅目标')
+        biliCom.subcommand('.list', '列出订阅目标')
+            .alias('.ls')
             .action(async ({ session }) => {
                 let channel = `${session.event.platform}:${session.event.channel.id}`
                 let reply = channel + '的订阅列表：\n'
@@ -310,6 +311,7 @@ class BiliCmd {
 
         biliCom
             .subcommand('.sub <uid:number>', '订阅B站用户')
+            .alias('.add', '.subscribe')
             .usage('不指定类型时，将订阅全部通知\n在目标频道已有订阅时，再次订阅将覆盖原有设置')
             .option('live', '-l 订阅直播通知')
             .option('dynamic', '-d 订阅动态通知')
