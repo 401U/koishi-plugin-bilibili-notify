@@ -25,7 +25,7 @@
     "bilibili"
   ],
   "scripts": {
-    "build": "atcs -b"
+    "build": "atsc -b"
   },
   "peerDependencies": {
     "koishi": "^4.17.5"
