@@ -1,7 +1,7 @@
 import { Context, ForkScope, Logger, Schema, Service } from 'koishi'
 import { } from '@koishijs/plugin-notifier'
 import BiliCmd from './cmd'
-import * as Database from './database'
+import {setupDB} from './database'
 // import Service
 import Wbi from './wbi'
 import BiliAPI from './api'
@@ -92,13 +92,11 @@ class BiliDaemon extends Service {
         await new Promise(resolve => {
             // 注册插件
             this.log.info('开始加载')
-            const biliDB = this.ctx.plugin(Database)
             const wbi = this.ctx.plugin(Wbi, conf.wbi)
             const biliApi = this.ctx.plugin(BiliAPI, conf.api)
             const biliRender = this.ctx.plugin(Render, conf.render)
             const biliCmd = this.ctx.plugin(BiliCmd, conf.main)
             // 添加服务
-            this.servers.push(biliDB)
             this.servers.push(wbi)
             this.servers.push(biliApi)
             this.servers.push(biliRender)
@@ -153,6 +151,7 @@ class BiliDaemon extends Service {
 export function apply(ctx: Context, config: Config) {
     // 设置config
     conf = config
+    setupDB(ctx)
     // Register ServerManager
     ctx.plugin(BiliDaemon)
 }

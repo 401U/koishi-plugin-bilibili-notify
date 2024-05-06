@@ -539,9 +539,9 @@ class BiliCmd {
             })
 
         testCom
-            .subcommand('.user <mid:number>', '获取用户B站信息')
-            .action(async (_, mid) => {
-                const content = await ctx.biliApi.getUserInfo(mid)
+            .subcommand('.user <uid:number>', '获取用户B站信息')
+            .action(async (_, uid) => {
+                const content = await ctx.biliApi.getUserInfo(uid)
                 return JSON.stringify(content)
             })
 
@@ -549,12 +549,6 @@ class BiliCmd {
             .action(async ({}, uid) => {
                 const content = await ctx.biliApi.checkLivesByUids([uid])
                 return await ctx.biliRender.renderLive(content.data[uid])
-            })
-
-        testCom
-            .subcommand('.time','测试时间接口')
-            .action(async () => {
-                return JSON.stringify(await ctx.biliApi.getTimeNow())
             })
 
         testCom
@@ -575,12 +569,6 @@ class BiliCmd {
                 this.log.info("获取到动态数据\n" + JSON.stringify(data.item, null, '  '))
                 const msg = await ctx.biliRender.renderDynamic(data.item)
                 await session.send(msg)
-            })
-
-        testCom
-            .subcommand('.utc', '获取当前时间戳')
-            .action(async ({ session }) => {
-                session.send((await ctx.biliApi.getServerUTCTime()).toString())
             })
 
         testCom.subcommand('.subs', '获取动态页面最新一页')

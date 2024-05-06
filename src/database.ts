@@ -42,9 +42,7 @@ export interface LoginBili {
     bili_refresh_token: string
 }
 
-export const name = 'Database'
-
-export function apply(ctx: Context) {
+export function setupDB(ctx: Context) {
     let logger = ctx.logger('BiliDB')
     // 新增LoginBili表
     ctx.model.extend('loginBili', {

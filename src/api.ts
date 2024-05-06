@@ -4,7 +4,6 @@ import { CookieJar, Cookie } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
 import { JSDOM } from 'jsdom'
 import { Notifier } from "@koishijs/plugin-notifier"
-import { DateTime } from "luxon"
 
 declare module 'koishi' {
     interface Context {
@@ -24,10 +23,7 @@ const GET_USER_INFO = 'https://api.bilibili.com/x/space/wbi/acc/info'
 const GET_MYSELF_INFO = 'https://api.bilibili.com/x/member/web/account'
 const GET_LOGIN_QRCODE = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate'
 const GET_LOGIN_STATUS = 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll'
-const GET_LIVE_ROOM_INFO = 'https://api.live.bilibili.com/room/v1/Room/get_info'
 const GET_MASTER_INFO = 'https://api.live.bilibili.com/live_user/v1/Master/info'
-const GET_TIME_NOW = 'https://api.bilibili.com/x/report/click/now'
-const GET_SERVER_UTC_TIME = 'https://interface.bilibili.com/serverdate.js'
 
 const GET_LIVE_ROOM_INFO_LIST = 'https://api.live.bilibili.com/room/v1/Room/get_status_info_by_uids'
 
@@ -76,25 +72,6 @@ class BiliAPI extends Service {
         } catch (e) {
             this.log.error(`<<<<<<<<<< Received error:\n`, e)
             throw new Error('网络异常，本次请求失败！')
-        }
-    }
-    /* protected stop(): void | Promise<void> {
-        this.logger.info('已停止工作')
-    } */
-
-    async getServerUTCTime() {
-        try {
-            const data  = await this.get(GET_SERVER_UTC_TIME)
-            const regex = /Date\.UTC\((.*?)\)/;
-            const match = data.match(regex);
-            if (match) {
-                const timestamp = new Function(`return Date.UTC(${match[1]})`)();
-                return timestamp / 1000;
-            } else {
-                throw new Error('解析服务器时间失败！');
-            }
-        } catch (e) {
-            throw new Error('网络异常，本次请求失败！');
         }
     }
 
@@ -223,16 +200,12 @@ class BiliAPI extends Service {
         return await this.get(GET_DYNAMIC_LIST) as BiliResp<Pagination<DynamicItem>>
     }
 
-    async getTimeNow() {
-        return await this.get(GET_TIME_NOW)
-    }
-
     async getUserSpaceDynamic(mid: string) {
         return await this.get(`${GET_USER_SPACE_DYNAMIC_LIST}${mid}`)
     }
 
     // Check if Token need refresh
-    async getCookieInfo(refreshToken: string) {
+    private async getCookieInfo(refreshToken: string) {
         return await this.get(`${GET_COOKIES_INFO}?csrf=${refreshToken}`)
     }
 
@@ -258,17 +231,13 @@ class BiliAPI extends Service {
         return await this.get(`${GET_LOGIN_STATUS}?qrcode_key=${qrcodeKey}`)
     }
 
-    async getLiveRoomInfo(roomId: string) {
-        return await this.get(`${GET_LIVE_ROOM_INFO}?room_id=${roomId}`)
-    }
-
     async getMasterInfo(mid: number) {
         return await this.get(`${GET_MASTER_INFO}?uid=${mid}`)
     }
 
     disposeNotifier() { this.loginNotifier && this.loginNotifier.dispose() }
 
-    getRandomUserAgent() {
+    private getRandomUserAgent() {
         const userAgents = [
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
@@ -281,7 +250,7 @@ class BiliAPI extends Service {
         return userAgents[index];
     }
 
-    createNewClient() {
+    private createNewClient() {
         this.jar = new CookieJar()
         this.client = wrapper(axios.create({
             jar: this.jar,
@@ -296,10 +265,6 @@ class BiliAPI extends Service {
         }))
     }
 
-    getTimeOfUTC8() {
-        return Math.floor(DateTime.now().setZone('UTC+8').toSeconds())
-    }
-
     getCookies() {
         let cookies: string
         cookies = JSON.stringify(this.jar.serializeSync().cookies)
@@ -310,7 +275,7 @@ class BiliAPI extends Service {
         return this.loginInfoIsLoaded
     }
 
-    async getLoginInfoFromDB() {
+    private async getLoginInfoFromDB() {
         // 读取数据库获取cookies
         const data = (await this.ctx.database.get('loginBili', 1))[0]
         // 判断是否登录
@@ -349,7 +314,7 @@ class BiliAPI extends Service {
         }
     }
 
-    async loadCookiesFromDatabase() {
+    private async loadCookiesFromDatabase() {
         // Get login info from db
         const { cookies, refresh_token } = await this.getLoginInfoFromDB()
         // 判断是否有值
@@ -403,7 +368,7 @@ class BiliAPI extends Service {
         }, 3600000)
     }
 
-    async checkIfTokenNeedRefresh(refreshToken: string, csrf: string, times: number = 3) {
+    private async checkIfTokenNeedRefresh(refreshToken: string, csrf: string, times: number = 3) {
         // 定义方法
         const notifyAndError = (info: string) => {
             // 设置控制台通知
