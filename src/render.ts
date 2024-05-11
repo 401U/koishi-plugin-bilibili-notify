@@ -2,14 +2,13 @@ import { Context, Logger, Schema, Service, h } from "koishi";
 import { resolve } from "path";
 import { pathToFileURL } from "url";
 import {} from 'koishi-plugin-puppeteer'
+import { DYNAMIC_TYPES, ADDITIONAL_TYPES, MAJOR_TYPES, DynamicItem, AdditionalModuleWrapper, DynamicItemDynamicWrapper, RichTextNode, LiveRoomInfo, RENDER_TYPES } from "./bean";
 
 declare module 'koishi' {
     interface Context {
         biliRender: Render
     }
 }
-
-type RENDER_TYPES = DYNAMIC_TYPES | ADDITIONAL_TYPES | MAJOR_TYPES
 
 interface ModuleRenderResult{
     content?: string
@@ -57,7 +56,7 @@ class Render extends Service{
         this.registerRenderHandler(['DYNAMIC_TYPE_WORD', 'DYNAMIC_TYPE_DRAW', 'DYNAMIC_TYPE_FORWARD'], (data, forward) => {
             let item = data as DynamicItem
             let content = this.renderDynamicModule(item.modules.module_dynamic)
-            if(data.type === 'DYNAMIC_TYPE_FORWARD') {
+            if(item.type === 'DYNAMIC_TYPE_FORWARD') {
                 let forwardContent: string
                 const forwardAuthor = item.orig.modules.module_author
                 try {
@@ -407,7 +406,7 @@ class Render extends Service{
      * @param data 动态数据
      */
     async renderDynamic(data: DynamicItem): Promise<h.Fragment>{
-        const { module_author: authorModule, module_dynamic: dynamicModule, module_stat: statModule } = data.modules
+        const { module_author: authorModule } = data.modules
         const result = this.renderMajor(data, false)
         if (result.error) {
             return result.error

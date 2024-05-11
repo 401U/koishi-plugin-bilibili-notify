@@ -4,6 +4,7 @@ import { CookieJar, Cookie } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
 import { JSDOM } from 'jsdom'
 import { Notifier } from "@koishijs/plugin-notifier"
+import { BiliResp, IsFollow, DynamicDetail, FollowGroup, LiveRoomMap, Pagination, DynamicItem } from "./bean"
 
 declare module 'koishi' {
     interface Context {

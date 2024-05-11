@@ -1,0 +1,385 @@
+{
+    "basic": {
+      "comment_id_str": "315230709",
+      "comment_type": 11,
+      "jump_url": "//www.bilibili.com/opus/926866513862852628",
+      "like_icon": {
+        "action_url": "",
+        "end_url": "",
+        "id": 0,
+        "start_url": ""
+      },
+      "rid_str": "315230709"
+    },
+    "id_str": "926866513862852628",
+    "modules": {
+      "module_author": {
+        "avatar": {
+          "container_size": {
+            "height": 1.375,
+            "width": 1.375
+          },
+          "fallback_layers": {
+            "is_critical_group": true,
+            "layers": [
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.6875,
+                    "axis_y": 0.6875,
+                    "coordinate_pos": 2
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 0.787,
+                    "width": 0.787
+                  }
+                },
+                "layer_config": {
+                  "is_critical": true,
+                  "tags": {
+                    "AVATAR_LAYER": {},
+                    "GENERAL_CFG": {
+                      "config_type": 1,
+                      "general_config": {
+                        "web_css_style": {
+                          "borderRadius": "50%"
+                        }
+                      }
+                    }
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "placeholder": 6,
+                      "remote": {
+                        "bfs_style": "widget-layer-avatar",
+                        "url": "https://i0.hdslb.com/bfs/face/90b84046abf65ea0304168518dae1aa2085018b1.jpg"
+                      },
+                      "src_type": 1
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              },
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.6875,
+                    "axis_y": 0.6875,
+                    "coordinate_pos": 2
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 1.375,
+                    "width": 1.375
+                  }
+                },
+                "layer_config": {
+                  "tags": {
+                    "PENDENT_LAYER": {}
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "remote": {
+                        "bfs_style": "widget-layer-avatar",
+                        "url": "https://i0.hdslb.com/bfs/garb/item/f8bb9af4f245cce0fcba5df248069f1eedd8cbb7.png"
+                      },
+                      "src_type": 1
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              },
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.7560000000000001,
+                    "axis_y": 0.7726666666666667,
+                    "coordinate_pos": 1
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 0.41666666666666663,
+                    "width": 0.41666666666666663
+                  }
+                },
+                "layer_config": {
+                  "tags": {
+                    "GENERAL_CFG": {
+                      "config_type": 1,
+                      "general_config": {
+                        "web_css_style": {
+                          "background-color": "rgb(255,255,255)",
+                          "border": "2px solid rgba(255,255,255,1)",
+                          "borderRadius": "50%",
+                          "boxSizing": "border-box"
+                        }
+                      }
+                    },
+                    "ICON_LAYER": {}
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "local": 3,
+                      "src_type": 2
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              }
+            ]
+          },
+          "mid": "81371985"
+        },
+        "decorate": {
+          "card_url": "https://i0.hdslb.com/bfs/garb/item/45cdc5e97f4a5bbcba91239ab2c632778788188d.png",
+          "fan": {
+            "color": "",
+            "color_format": null,
+            "is_fan": false,
+            "num_prefix": "",
+            "num_str": "",
+            "number": 0
+          },
+          "id": 53366,
+          "jump_url": "https://www.bilibili.com/h5/mall/equity-link/collect-home?item_id=53366&isdiy=0&part=card&from=post&f_source=garb&vmid=81371985&native.theme=1&navhide=1",
+          "name": "崩坏：星穹铁道",
+          "type": 1
+        },
+        "face": "https://i0.hdslb.com/bfs/face/90b84046abf65ea0304168518dae1aa2085018b1.jpg",
+        "face_nft": false,
+        "following": null,
+        "jump_url": "//space.bilibili.com/81371985/dynamic",
+        "label": "",
+        "mid": 81371985,
+        "name": "男人的承诺",
+        "official_verify": {
+          "desc": "",
+          "type": 0
+        },
+        "pendant": {
+          "expire": 0,
+          "image": "https://i0.hdslb.com/bfs/garb/item/f8bb9af4f245cce0fcba5df248069f1eedd8cbb7.png",
+          "image_enhance": "https://i0.hdslb.com/bfs/garb/item/f8bb9af4f245cce0fcba5df248069f1eedd8cbb7.png",
+          "image_enhance_frame": "",
+          "n_pid": 53590,
+          "name": "崩坏：星穹铁道",
+          "pid": 53590
+        },
+        "pub_action": "",
+        "pub_location_text": "",
+        "pub_time": "2天前",
+        "pub_ts": 1714641327,
+        "type": "AUTHOR_TYPE_NORMAL",
+        "vip": {
+          "avatar_subscript": 0,
+          "avatar_subscript_url": "",
+          "due_date": 1668528000000,
+          "label": {
+            "bg_color": "",
+            "bg_style": 0,
+            "border_color": "",
+            "img_label_uri_hans": "",
+            "img_label_uri_hans_static": "https://i0.hdslb.com/bfs/vip/d7b702ef65a976b20ed854cbd04cb9e27341bb79.png",
+            "img_label_uri_hant": "",
+            "img_label_uri_hant_static": "https://i0.hdslb.com/bfs/activity-plat/static/20220614/e369244d0b14644f5e1a06431e22a4d5/KJunwh19T5.png",
+            "label_theme": "",
+            "path": "",
+            "text": "",
+            "text_color": "",
+            "use_img_label": true
+          },
+          "nickname_color": "",
+          "status": 0,
+          "theme_type": 0,
+          "type": 1
+        }
+      },
+      "module_dynamic": {
+        "additional": null,
+        "desc": null,
+        "major": {
+          "opus": {
+            "fold_action": [
+              "展开",
+              "收起"
+            ],
+            "jump_url": "//www.bilibili.com/opus/926866513862852628",
+            "pics": [
+              {
+                "height": 3084,
+                "size": 1500.9189453125,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/3629265a5a51a69a4ac33b1366d9479081371985.jpg",
+                "width": 1823
+              },
+              {
+                "height": 4032,
+                "size": 5601.1953125,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/b1d98ac72af62a63ba17ed7ced5d3e7481371985.jpg",
+                "width": 3024
+              },
+              {
+                "height": 4217,
+                "size": 4888.81640625,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/da3651e598e26842b5f02d6111d4632481371985.jpg",
+                "width": 3024
+              },
+              {
+                "height": 1999,
+                "size": 4236.4814453125,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/9346eae691fe2e5b1ce4f718b46f72d781371985.png",
+                "width": 1284
+              },
+              {
+                "height": 3843,
+                "size": 2342.4150390625,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/f67a1b0c56a36878bb056fd27f7ec2ff81371985.jpg",
+                "width": 2882
+              },
+              {
+                "height": 2238,
+                "size": 4743.228515625,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/d674306bb9615754bbced1d17339d8dc81371985.png",
+                "width": 1284
+              },
+              {
+                "height": 2053,
+                "size": 5007.658203125,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/1de2f61e933608cf8f0a487bb4fab98881371985.png",
+                "width": 1284
+              },
+              {
+                "height": 2071,
+                "size": 4155.861328125,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/14f7cf4052b5b0a47717358aebd64f6581371985.png",
+                "width": 1284
+              },
+              {
+                "height": 3980,
+                "size": 3268.5830078125,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/660c41b9bbafe7e890bc2f987af6f77881371985.jpg",
+                "width": 2839
+              }
+            ],
+            "summary": {
+              "rich_text_nodes": [
+                {
+                  "orig_text": "怎么会有这么多好看的coser啊啊啊啊",
+                  "text": "怎么会有这么多好看的coser啊啊啊啊",
+                  "type": "RICH_TEXT_NODE_TYPE_TEXT"
+                },
+                {
+                  "emoji": {
+                    "icon_url": "https://i0.hdslb.com/bfs/emote/8a10a4d73a89f665feff3d46ca56e83dc68f9eb8.png",
+                    "size": 1,
+                    "text": "[喜欢]",
+                    "type": 1
+                  },
+                  "orig_text": "[喜欢]",
+                  "text": "[喜欢]",
+                  "type": "RICH_TEXT_NODE_TYPE_EMOJI"
+                },
+                {
+                  "emoji": {
+                    "icon_url": "https://i0.hdslb.com/bfs/emote/8a10a4d73a89f665feff3d46ca56e83dc68f9eb8.png",
+                    "size": 1,
+                    "text": "[喜欢]",
+                    "type": 1
+                  },
+                  "orig_text": "[喜欢]",
+                  "text": "[喜欢]",
+                  "type": "RICH_TEXT_NODE_TYPE_EMOJI"
+                },
+                {
+                  "emoji": {
+                    "icon_url": "https://i0.hdslb.com/bfs/emote/8a10a4d73a89f665feff3d46ca56e83dc68f9eb8.png",
+                    "size": 1,
+                    "text": "[喜欢]",
+                    "type": 1
+                  },
+                  "orig_text": "[喜欢]",
+                  "text": "[喜欢]",
+                  "type": "RICH_TEXT_NODE_TYPE_EMOJI"
+                },
+                {
+                  "orig_text": "\n",
+                  "text": "\n",
+                  "type": "RICH_TEXT_NODE_TYPE_TEXT"
+                }
+              ],
+              "text": "怎么会有这么多好看的coser啊啊啊啊[喜欢][喜欢][喜欢]\n"
+            },
+            "title": "星穹铁道嘉年华！集邮！爽！"
+          },
+          "type": "MAJOR_TYPE_OPUS"
+        },
+        "topic": null
+      },
+      "module_interaction": {
+        "items": [
+          {
+            "desc": {
+              "rich_text_nodes": [
+                {
+                  "orig_text": "这把我们就刷出破势：",
+                  "rid": "13064229",
+                  "text": "这把我们就刷出破势：",
+                  "type": "RICH_TEXT_NODE_TYPE_AT"
+                },
+                {
+                  "orig_text": "我去，月飞@月飞大叔",
+                  "text": "我去，月飞@月飞大叔",
+                  "type": "RICH_TEXT_NODE_TYPE_TEXT"
+                }
+              ],
+              "text": "我去，月飞@月飞大叔"
+            },
+            "type": 1
+          }
+        ]
+      },
+      "module_more": {
+        "three_point_items": [
+          {
+            "label": "举报",
+            "type": "THREE_POINT_REPORT"
+          }
+        ]
+      },
+      "module_stat": {
+        "comment": {
+          "count": 91,
+          "forbidden": false
+        },
+        "forward": {
+          "count": 3,
+          "forbidden": false
+        },
+        "like": {
+          "count": 649,
+          "forbidden": false,
+          "status": false
+        }
+      },
+      "module_tag": {
+        "text": "置顶"
+      }
+    },
+    "type": "DYNAMIC_TYPE_DRAW",
+    "visible": true
+  }

@@ -1,0 +1,296 @@
+{
+    "basic": {
+      "comment_id_str": "315464051",
+      "comment_type": 11,
+      "jump_url": "//www.bilibili.com/opus/927652720520724515",
+      "like_icon": {
+        "action_url": "",
+        "end_url": "",
+        "id": 0,
+        "start_url": ""
+      },
+      "rid_str": "315464051"
+    },
+    "id_str": "927652720520724515",
+    "modules": {
+      "module_author": {
+        "avatar": {
+          "container_size": {
+            "height": 1.375,
+            "width": 1.375
+          },
+          "fallback_layers": {
+            "is_critical_group": true,
+            "layers": [
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.6875,
+                    "axis_y": 0.6875,
+                    "coordinate_pos": 2
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 0.787,
+                    "width": 0.787
+                  }
+                },
+                "layer_config": {
+                  "is_critical": true,
+                  "tags": {
+                    "AVATAR_LAYER": {},
+                    "GENERAL_CFG": {
+                      "config_type": 1,
+                      "general_config": {
+                        "web_css_style": {
+                          "borderRadius": "50%"
+                        }
+                      }
+                    }
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "placeholder": 6,
+                      "remote": {
+                        "bfs_style": "widget-layer-avatar",
+                        "url": "https://i1.hdslb.com/bfs/face/939bc84b0ff28599c31e5b274ce70121268649b4.jpg"
+                      },
+                      "src_type": 1
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              },
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.6875,
+                    "axis_y": 0.6875,
+                    "coordinate_pos": 2
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 1.375,
+                    "width": 1.375
+                  }
+                },
+                "layer_config": {
+                  "tags": {
+                    "PENDENT_LAYER": {}
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "remote": {
+                        "bfs_style": "widget-layer-avatar",
+                        "url": "https://i1.hdslb.com/bfs/face/e67163b55711e9d7c402341ac18ba0d88ee3b112.png"
+                      },
+                      "src_type": 1
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              },
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.7560000000000001,
+                    "axis_y": 0.7726666666666667,
+                    "coordinate_pos": 1
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 0.41666666666666663,
+                    "width": 0.41666666666666663
+                  }
+                },
+                "layer_config": {
+                  "tags": {
+                    "GENERAL_CFG": {
+                      "config_type": 1,
+                      "general_config": {
+                        "web_css_style": {
+                          "background-color": "rgb(255,255,255)",
+                          "border": "2px solid rgba(255,255,255,1)",
+                          "borderRadius": "50%",
+                          "boxSizing": "border-box"
+                        }
+                      }
+                    },
+                    "ICON_LAYER": {}
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "local": 1,
+                      "src_type": 2
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              }
+            ]
+          },
+          "mid": "153890218"
+        },
+        "decorate": {
+          "card_url": "https://i0.hdslb.com/bfs/garb/item/ceb7d1827f13103f0d499f62b1ffa8af5f05c143.png",
+          "fan": {
+            "color": "#942b32",
+            "color_format": {
+              "colors": [
+                "#942b32FF",
+                "#942b32FF"
+              ],
+              "end_point": "0,100",
+              "gradients": [
+                0,
+                100
+              ],
+              "start_point": "0,0"
+            },
+            "is_fan": true,
+            "num_prefix": "NO.",
+            "num_str": "004918",
+            "number": 4918
+          },
+          "id": 38456,
+          "jump_url": "https://www.bilibili.com/h5/mall/equity-link/collect-home?item_id=38456&isdiy=0&part=card&from=post&f_source=garb&vmid=153890218&native.theme=1&navhide=1",
+          "name": "刺客信条15周年粉丝专属",
+          "type": 3
+        },
+        "face": "https://i1.hdslb.com/bfs/face/939bc84b0ff28599c31e5b274ce70121268649b4.jpg",
+        "face_nft": false,
+        "following": true,
+        "jump_url": "//space.bilibili.com/153890218/dynamic",
+        "label": "",
+        "mid": 153890218,
+        "name": "蜗牛柯基weibo",
+        "official_verify": {
+          "desc": "",
+          "type": -1
+        },
+        "pendant": {
+          "expire": 0,
+          "image": "https://i1.hdslb.com/bfs/face/e67163b55711e9d7c402341ac18ba0d88ee3b112.png",
+          "image_enhance": "https://i1.hdslb.com/bfs/face/e67163b55711e9d7c402341ac18ba0d88ee3b112.png",
+          "image_enhance_frame": "",
+          "n_pid": 995,
+          "name": "赫奇帕奇",
+          "pid": 995
+        },
+        "pub_action": "",
+        "pub_location_text": "",
+        "pub_time": "2024年05月04日 20:06",
+        "pub_ts": 1714824380,
+        "type": "AUTHOR_TYPE_NORMAL",
+        "vip": {
+          "avatar_subscript": 1,
+          "avatar_subscript_url": "",
+          "due_date": 1735142400000,
+          "label": {
+            "bg_color": "#FB7299",
+            "bg_style": 1,
+            "border_color": "",
+            "img_label_uri_hans": "https://i0.hdslb.com/bfs/activity-plat/static/20220608/e369244d0b14644f5e1a06431e22a4d5/0DFy9BHgwE.gif",
+            "img_label_uri_hans_static": "https://i0.hdslb.com/bfs/vip/8d7e624d13d3e134251e4174a7318c19a8edbd71.png",
+            "img_label_uri_hant": "",
+            "img_label_uri_hant_static": "https://i0.hdslb.com/bfs/activity-plat/static/20220614/e369244d0b14644f5e1a06431e22a4d5/uckjAv3Npy.png",
+            "label_theme": "annual_vip",
+            "path": "",
+            "text": "年度大会员",
+            "text_color": "#FFFFFF",
+            "use_img_label": true
+          },
+          "nickname_color": "#FB7299",
+          "status": 1,
+          "theme_type": 0,
+          "type": 2
+        }
+      },
+      "module_dynamic": {
+        "additional": null,
+        "desc": null,
+        "major": {
+          "opus": {
+            "fold_action": [
+              "展开",
+              "收起"
+            ],
+            "jump_url": "//www.bilibili.com/opus/927652720520724515",
+            "pics": [
+              {
+                "height": 284,
+                "size": 108.708984375,
+                "url": "http://i0.hdslb.com/bfs/new_dyn/aa21a6927b59e5dcae06bba116921e62153890218.png",
+                "width": 1280
+              }
+            ],
+            "summary": {
+              "rich_text_nodes": [
+                {
+                  "orig_text": "为什么俄军总是止步顿巴斯运河？看完这条视频",
+                  "text": "为什么俄军总是止步顿巴斯运河？看完这条视频",
+                  "type": "RICH_TEXT_NODE_TYPE_TEXT"
+                },
+                {
+                  "jump_url": "//www.bilibili.com/video/BV1ar421E7SQ/",
+                  "orig_text": "https://www.bilibili.com/video/BV1ar421E7SQ/",
+                  "rid": "BV1ar421E7SQ",
+                  "text": "这个视频很好，一下能直观看清楚传说中的顿巴斯运河啥样，这是俄军炸了恰索夫亚尔和微区之间横跨运河的桥梁",
+                  "type": "RICH_TEXT_NODE_TYPE_BV"
+                },
+                {
+                  "orig_text": " 的同学会觉得这么一条小破沟有啥？\n拜托，这是老天送给乌军天然的大型反坦克壕啊……",
+                  "text": " 的同学会觉得这么一条小破沟有啥？\n拜托，这是老天送给乌军天然的大型反坦克壕啊……",
+                  "type": "RICH_TEXT_NODE_TYPE_TEXT"
+                }
+              ],
+              "text": "为什么俄军总是止步顿巴斯运河？看完这条视频https://www.bilibili.com/video/BV1ar421E7SQ/ 的同学会觉得这么一条小破沟有啥？\n拜托，这是老天送给乌军天然的大型反坦克壕啊……"
+            },
+            "title": null
+          },
+          "type": "MAJOR_TYPE_OPUS"
+        },
+        "topic": null
+      },
+      "module_more": {
+        "three_point_items": [
+          {
+            "label": "举报",
+            "type": "THREE_POINT_REPORT"
+          }
+        ]
+      },
+      "module_stat": {
+        "comment": {
+          "count": 34,
+          "forbidden": false
+        },
+        "forward": {
+          "count": 2,
+          "forbidden": false
+        },
+        "like": {
+          "count": 262,
+          "forbidden": false,
+          "status": false
+        }
+      }
+    },
+    "type": "DYNAMIC_TYPE_DRAW",
+    "visible": true
+  }

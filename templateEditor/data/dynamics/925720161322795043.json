@@ -1,0 +1,519 @@
+{
+    "basic": {
+      "comment_id_str": "925720161322795043",
+      "comment_type": 17,
+      "like_icon": {
+        "action_url": "",
+        "end_url": "",
+        "id": 0,
+        "start_url": ""
+      },
+      "rid_str": "925720161322795043"
+    },
+    "id_str": "925720161322795043",
+    "modules": {
+      "module_author": {
+        "avatar": {
+          "container_size": {
+            "height": 1.35,
+            "width": 1.35
+          },
+          "fallback_layers": {
+            "is_critical_group": true,
+            "layers": [
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.675,
+                    "axis_y": 0.675,
+                    "coordinate_pos": 2
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 1,
+                    "width": 1
+                  }
+                },
+                "layer_config": {
+                  "is_critical": true,
+                  "tags": {
+                    "AVATAR_LAYER": {},
+                    "GENERAL_CFG": {
+                      "config_type": 1,
+                      "general_config": {
+                        "web_css_style": {
+                          "borderRadius": "50%"
+                        }
+                      }
+                    }
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "placeholder": 6,
+                      "remote": {
+                        "bfs_style": "widget-layer-avatar",
+                        "url": "https://i2.hdslb.com/bfs/face/a6419a5f230c500962c7954c907be74a7cbd61b5.jpg"
+                      },
+                      "src_type": 1
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              },
+              {
+                "general_spec": {
+                  "pos_spec": {
+                    "axis_x": 0.8000000000000002,
+                    "axis_y": 0.8000000000000002,
+                    "coordinate_pos": 1
+                  },
+                  "render_spec": {
+                    "opacity": 1
+                  },
+                  "size_spec": {
+                    "height": 0.41666666666666663,
+                    "width": 0.41666666666666663
+                  }
+                },
+                "layer_config": {
+                  "tags": {
+                    "GENERAL_CFG": {
+                      "config_type": 1,
+                      "general_config": {
+                        "web_css_style": {
+                          "background-color": "rgb(255,255,255)",
+                          "border": "2px solid rgba(255,255,255,1)",
+                          "borderRadius": "50%",
+                          "boxSizing": "border-box"
+                        }
+                      }
+                    },
+                    "ICON_LAYER": {}
+                  }
+                },
+                "resource": {
+                  "res_image": {
+                    "image_src": {
+                      "local": 4,
+                      "src_type": 2
+                    }
+                  },
+                  "res_type": 3
+                },
+                "visible": true
+              }
+            ]
+          },
+          "mid": "1340190821"
+        },
+        "face": "https://i2.hdslb.com/bfs/face/a6419a5f230c500962c7954c907be74a7cbd61b5.jpg",
+        "face_nft": false,
+        "following": null,
+        "jump_url": "//space.bilibili.com/1340190821/dynamic",
+        "label": "",
+        "mid": 1340190821,
+        "name": "崩坏星穹铁道",
+        "official_verify": {
+          "desc": "",
+          "type": 1
+        },
+        "pendant": {
+          "expire": 0,
+          "image": "",
+          "image_enhance": "",
+          "image_enhance_frame": "",
+          "n_pid": 0,
+          "name": "",
+          "pid": 0
+        },
+        "pub_action": "",
+        "pub_location_text": "",
+        "pub_time": "2024年04月29日 15:07",
+        "pub_ts": 1714374421,
+        "type": "AUTHOR_TYPE_NORMAL",
+        "vip": {
+          "avatar_subscript": 1,
+          "avatar_subscript_url": "",
+          "due_date": 1768233600000,
+          "label": {
+            "bg_color": "#FB7299",
+            "bg_style": 1,
+            "border_color": "",
+            "img_label_uri_hans": "",
+            "img_label_uri_hans_static": "https://i0.hdslb.com/bfs/vip/8d4f8bfc713826a5412a0a27eaaac4d6b9ede1d9.png",
+            "img_label_uri_hant": "",
+            "img_label_uri_hant_static": "https://i0.hdslb.com/bfs/activity-plat/static/20220614/e369244d0b14644f5e1a06431e22a4d5/VEW8fCC0hg.png",
+            "label_theme": "annual_vip",
+            "path": "",
+            "text": "年度大会员",
+            "text_color": "#FFFFFF",
+            "use_img_label": true
+          },
+          "nickname_color": "#FB7299",
+          "status": 1,
+          "theme_type": 0,
+          "type": 2
+        }
+      },
+      "module_dynamic": {
+        "additional": null,
+        "desc": {
+          "rich_text_nodes": [
+            {
+              "orig_text": "恭喜",
+              "text": "恭喜",
+              "type": "RICH_TEXT_NODE_TYPE_TEXT"
+            },
+            {
+              "orig_text": "@Silent晟",
+              "rid": "45384636",
+              "text": "@Silent晟",
+              "type": "RICH_TEXT_NODE_TYPE_AT"
+            },
+            {
+              "orig_text": "@花茶AO",
+              "rid": "3493282973747278",
+              "text": "@花茶AO",
+              "type": "RICH_TEXT_NODE_TYPE_AT"
+            },
+            {
+              "orig_text": "@Azu咲",
+              "rid": "3546392429595287",
+              "text": "@Azu咲",
+              "type": "RICH_TEXT_NODE_TYPE_AT"
+            },
+            {
+              "orig_text": "等20位同学中奖，已私信通知，详情请点击抽奖查看。",
+              "text": "等20位同学中奖，已私信通知，详情请点击抽奖查看。",
+              "type": "RICH_TEXT_NODE_TYPE_TEXT"
+            }
+          ],
+          "text": "恭喜@Silent晟@花茶AO@Azu咲等20位同学中奖，已私信通知，详情请点击抽奖查看。"
+        },
+        "major": null,
+        "topic": null
+      },
+      "module_more": {
+        "three_point_items": [
+          {
+            "label": "举报",
+            "type": "THREE_POINT_REPORT"
+          }
+        ]
+      },
+      "module_stat": {
+        "comment": {
+          "count": 483,
+          "forbidden": false
+        },
+        "forward": {
+          "count": 140,
+          "forbidden": false
+        },
+        "like": {
+          "count": 12137,
+          "forbidden": false,
+          "status": false
+        }
+      }
+    },
+    "orig": {
+      "basic": {
+        "comment_id_str": "",
+        "comment_type": 0,
+        "jump_url": "//www.bilibili.com/opus/920570882090336274",
+        "like_icon": {
+          "action_url": "",
+          "end_url": "",
+          "id": 0,
+          "start_url": ""
+        },
+        "rid_str": ""
+      },
+      "id_str": "920570882090336274",
+      "modules": {
+        "module_author": {
+          "avatar": {
+            "container_size": {
+              "height": 1.35,
+              "width": 1.35
+            },
+            "fallback_layers": {
+              "is_critical_group": true,
+              "layers": [
+                {
+                  "general_spec": {
+                    "pos_spec": {
+                      "axis_x": 0.675,
+                      "axis_y": 0.675,
+                      "coordinate_pos": 2
+                    },
+                    "render_spec": {
+                      "opacity": 1
+                    },
+                    "size_spec": {
+                      "height": 1,
+                      "width": 1
+                    }
+                  },
+                  "layer_config": {
+                    "is_critical": true,
+                    "tags": {
+                      "AVATAR_LAYER": {},
+                      "GENERAL_CFG": {
+                        "config_type": 1,
+                        "general_config": {
+                          "web_css_style": {
+                            "borderRadius": "50%"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "resource": {
+                    "res_image": {
+                      "image_src": {
+                        "placeholder": 6,
+                        "remote": {
+                          "bfs_style": "widget-layer-avatar",
+                          "url": "https://i2.hdslb.com/bfs/face/a6419a5f230c500962c7954c907be74a7cbd61b5.jpg"
+                        },
+                        "src_type": 1
+                      }
+                    },
+                    "res_type": 3
+                  },
+                  "visible": true
+                },
+                {
+                  "general_spec": {
+                    "pos_spec": {
+                      "axis_x": 0.8000000000000002,
+                      "axis_y": 0.8000000000000002,
+                      "coordinate_pos": 1
+                    },
+                    "render_spec": {
+                      "opacity": 1
+                    },
+                    "size_spec": {
+                      "height": 0.41666666666666663,
+                      "width": 0.41666666666666663
+                    }
+                  },
+                  "layer_config": {
+                    "tags": {
+                      "GENERAL_CFG": {
+                        "config_type": 1,
+                        "general_config": {
+                          "web_css_style": {
+                            "background-color": "rgb(255,255,255)",
+                            "border": "2px solid rgba(255,255,255,1)",
+                            "borderRadius": "50%",
+                            "boxSizing": "border-box"
+                          }
+                        }
+                      },
+                      "ICON_LAYER": {}
+                    }
+                  },
+                  "resource": {
+                    "res_image": {
+                      "image_src": {
+                        "local": 4,
+                        "src_type": 2
+                      }
+                    },
+                    "res_type": 3
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            "mid": "1340190821"
+          },
+          "face": "https://i2.hdslb.com/bfs/face/a6419a5f230c500962c7954c907be74a7cbd61b5.jpg",
+          "face_nft": false,
+          "following": null,
+          "jump_url": "//space.bilibili.com/1340190821/dynamic",
+          "label": "",
+          "mid": 1340190821,
+          "name": "崩坏星穹铁道",
+          "official_verify": {
+            "desc": "",
+            "type": 1
+          },
+          "pendant": {
+            "expire": 0,
+            "image": "",
+            "image_enhance": "",
+            "image_enhance_frame": "",
+            "n_pid": 0,
+            "name": "",
+            "pid": 0
+          },
+          "pub_action": "",
+          "pub_time": "",
+          "pub_ts": 1713175511,
+          "type": "AUTHOR_TYPE_NORMAL",
+          "vip": {
+            "avatar_subscript": 1,
+            "avatar_subscript_url": "",
+            "due_date": 1768233600000,
+            "label": {
+              "bg_color": "#FB7299",
+              "bg_style": 1,
+              "border_color": "",
+              "img_label_uri_hans": "",
+              "img_label_uri_hans_static": "https://i0.hdslb.com/bfs/vip/8d4f8bfc713826a5412a0a27eaaac4d6b9ede1d9.png",
+              "img_label_uri_hant": "",
+              "img_label_uri_hant_static": "https://i0.hdslb.com/bfs/activity-plat/static/20220614/e369244d0b14644f5e1a06431e22a4d5/VEW8fCC0hg.png",
+              "label_theme": "annual_vip",
+              "path": "",
+              "text": "年度大会员",
+              "text_color": "#FFFFFF",
+              "use_img_label": true
+            },
+            "nickname_color": "#FB7299",
+            "status": 1,
+            "theme_type": 0,
+            "type": 2
+          }
+        },
+        "module_dynamic": {
+          "additional": {
+            "common": {
+              "button": {
+                "jump_style": {
+                  "icon_url": "",
+                  "text": "进入"
+                },
+                "jump_url": "https://www.biligame.com/detail?id=107800&sourceFrom=1005",
+                "type": 1
+              },
+              "cover": "https://i0.hdslb.com/bfs/game/1a9b28c6fce5fdcd88aead98d6329d7cde4eee8f.png",
+              "desc1": "角色扮演/冒险",
+              "desc2": "周年庆典开启，7日签到领取20抽",
+              "head_text": "相关游戏",
+              "id_str": "107800",
+              "jump_url": "https://www.biligame.com/detail?id=107800&sourceFrom=1005",
+              "style": 1,
+              "sub_type": "game",
+              "title": "崩坏：星穹铁道"
+            },
+            "type": "ADDITIONAL_TYPE_COMMON"
+          },
+          "desc": null,
+          "major": {
+            "opus": {
+              "fold_action": [
+                "展开",
+                "收起"
+              ],
+              "jump_url": "//www.bilibili.com/opus/920570882090336274",
+              "pics": [
+                {
+                  "height": 400,
+                  "size": 124.0927734375,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/be4fbab38325051528a4ae9bce5e73141340190821.jpg",
+                  "width": 400
+                },
+                {
+                  "height": 400,
+                  "size": 160.564453125,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/2da2313cd7a02ccadfd0541ec76236c11340190821.jpg",
+                  "width": 400
+                },
+                {
+                  "height": 400,
+                  "size": 151.5087890625,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/e2237ddf41996f1c3489a4d86f025c461340190821.jpg",
+                  "width": 400
+                },
+                {
+                  "height": 400,
+                  "size": 128.341796875,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/6a8a97922b24361dfcbdb7e0588a38d91340190821.jpg",
+                  "width": 400
+                },
+                {
+                  "height": 400,
+                  "size": 169.541015625,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/86924e626c2f98d7d36a40e4aa5f76a11340190821.jpg",
+                  "width": 400
+                },
+                {
+                  "height": 400,
+                  "size": 107.9130859375,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/21faca0884f0cd3b59ddf1b36dda9bf11340190821.jpg",
+                  "width": 400
+                },
+                {
+                  "height": 4090,
+                  "size": 1101.0908203125,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/bc40ea7d17df19614b73ff8f9927d5f11340190821.jpg",
+                  "width": 900
+                },
+                {
+                  "height": 4240,
+                  "size": 1057.91796875,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/4df576e439572cabf7193f156a5aefca1340190821.jpg",
+                  "width": 900
+                },
+                {
+                  "height": 4750,
+                  "size": 1189.1337890625,
+                  "url": "http://i0.hdslb.com/bfs/new_dyn/e66e202b30d52195372e016f770c2c2a1340190821.jpg",
+                  "width": 900
+                }
+              ],
+              "summary": {
+                "rich_text_nodes": [
+                  {
+                    "orig_text": "互动抽奖",
+                    "rid": "292088",
+                    "text": "互动抽奖",
+                    "type": "RICH_TEXT_NODE_TYPE_LOTTERY"
+                  },
+                  {
+                    "jump_url": "//search.bilibili.com/all?keyword=%E5%B4%A9%E5%9D%8F%E6%98%9F%E7%A9%B9%E9%93%81%E9%81%93",
+                    "orig_text": "#崩坏星穹铁道#",
+                    "text": "#崩坏星穹铁道#",
+                    "type": "RICH_TEXT_NODE_TYPE_TOPIC"
+                  },
+                  {
+                    "orig_text": " ",
+                    "text": " ",
+                    "type": "RICH_TEXT_NODE_TYPE_TEXT"
+                  },
+                  {
+                    "jump_url": "//search.bilibili.com/all?keyword=%E6%98%9F%E7%A9%B9%E9%93%81%E9%81%93%E5%98%89%E5%B9%B4%E5%8D%8E",
+                    "orig_text": "#星穹铁道嘉年华#",
+                    "text": "#星穹铁道嘉年华#",
+                    "type": "RICH_TEXT_NODE_TYPE_TOPIC"
+                  },
+                  {
+                    "orig_text": " \n\n「星铁LAND」2024星穹铁道嘉年华活动情报\n\n跃迁即将开始，请开拓者做好准备！列车前方到站：「星铁LAND」！\n亲爱的开拓者，「星铁LAND」将于4月17日19:00正式开启第一轮售票！帕姆今天为开拓者带来了「星铁LAND」的详细情报，包含购票须知、展区预览、随票赠礼等内容。\n更多活动详情请点击下方长图查看~ \n快来和帕姆一同加入这场欢聚庆典，沉浸式体验开拓之旅帕！  \n\n▉整体活动信息点击链接前往查看：https://mhyurl.cn/a3QiFBAL \n———————————————————\n▉转发抽奖：\n关注并转发本条动态，帕姆将于4月29日抽取抽取20位幸运开拓者各获得「星铁LAND系列色纸」一份。\n———————————————————\n▉帕姆小贴士：\n1.第一轮售票仅开放70%的票量，第二轮售票将开放剩余所有票量，活动门票数量有限，售完即止，第二轮售票开放时间以官方后续信息为准。\n2.此次嘉年华购票后需在订单页面申报是否Cosplay，请开拓者根据实际情况进行信息申报，审核通过后方可出票。同时为方便开拓者乘坐公共交通出行（部分Cosplay服装或道具可能无法通过安检）与快速入场，建议需要Cosplay的开拓者穿着便服乘坐公共交通，现场将设有更衣间供开拓者更换服饰。",
+                    "text": " \n\n「星铁LAND」2024星穹铁道嘉年华活动情报\n\n跃迁即将开始，请开拓者做好准备！列车前方到站：「星铁LAND」！\n亲爱的开拓者，「星铁LAND」将于4月17日19:00正式开启第一轮售票！帕姆今天为开拓者带来了「星铁LAND」的详细情报，包含购票须知、展区预览、随票赠礼等内容。\n更多活动详情请点击下方长图查看~ \n快来和帕姆一同加入这场欢聚庆典，沉浸式体验开拓之旅帕！  \n\n▉整体活动信息点击链接前往查看：https://mhyurl.cn/a3QiFBAL \n———————————————————\n▉转发抽奖：\n关注并转发本条动态，帕姆将于4月29日抽取抽取20位幸运开拓者各获得「星铁LAND系列色纸」一份。\n———————————————————\n▉帕姆小贴士：\n1.第一轮售票仅开放70%的票量，第二轮售票将开放剩余所有票量，活动门票数量有限，售完即止，第二轮售票开放时间以官方后续信息为准。\n2.此次嘉年华购票后需在订单页面申报是否Cosplay，请开拓者根据实际情况进行信息申报，审核通过后方可出票。同时为方便开拓者乘坐公共交通出行（部分Cosplay服装或道具可能无法通过安检）与快速入场，建议需要Cosplay的开拓者穿着便服乘坐公共交通，现场将设有更衣间供开拓者更换服饰。",
+                    "type": "RICH_TEXT_NODE_TYPE_TEXT"
+                  }
+                ],
+                "text": "互动抽奖#崩坏星穹铁道# #星穹铁道嘉年华# \n\n「星铁LAND」2024星穹铁道嘉年华活动情报\n\n跃迁即将开始，请开拓者做好准备！列车前方到站：「星铁LAND」！\n亲爱的开拓者，「星铁LAND」将于4月17日19:00正式开启第一轮售票！帕姆今天为开拓者带来了「星铁LAND」的详细情报，包含购票须知、展区预览、随票赠礼等内容。\n更多活动详情请点击下方长图查看~ \n快来和帕姆一同加入这场欢聚庆典，沉浸式体验开拓之旅帕！  \n\n▉整体活动信息点击链接前往查看：https://mhyurl.cn/a3QiFBAL \n———————————————————\n▉转发抽奖：\n关注并转发本条动态，帕姆将于4月29日抽取抽取20位幸运开拓者各获得「星铁LAND系列色纸」一份。\n———————————————————\n▉帕姆小贴士：\n1.第一轮售票仅开放70%的票量，第二轮售票将开放剩余所有票量，活动门票数量有限，售完即止，第二轮售票开放时间以官方后续信息为准。\n2.此次嘉年华购票后需在订单页面申报是否Cosplay，请开拓者根据实际情况进行信息申报，审核通过后方可出票。同时为方便开拓者乘坐公共交通出行（部分Cosplay服装或道具可能无法通过安检）与快速入场，建议需要Cosplay的开拓者穿着便服乘坐公共交通，现场将设有更衣间供开拓者更换服饰。"
+              },
+              "title": null
+            },
+            "type": "MAJOR_TYPE_OPUS"
+          },
+          "topic": null
+        }
+      },
+      "type": "DYNAMIC_TYPE_DRAW",
+      "visible": true
+    },
+    "type": "DYNAMIC_TYPE_FORWARD",
+    "visible": true
+  }

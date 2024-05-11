@@ -26,6 +26,9 @@ type RICH_TEXT_NODE_TYPES = 'RICH_TEXT_NODE_TYPE_TEXT' | 'RICH_TEXT_NODE_TYPE_EM
     'RICH_TEXT_NODE_TYPE_TOPIC' | 'RICH_TEXT_NODE_TYPE_AT' | 'RICH_TEXT_NODE_TYPE_LOTTERY' |
     'RICH_TEXT_NODE_TYPE_BV'
 
+type RENDER_TYPES = DYNAMIC_TYPES | ADDITIONAL_TYPES | MAJOR_TYPES
+
+
 interface IsFollow{
     attribute: 0 | 2 | 6 | 128
 }
@@ -91,25 +94,14 @@ interface DynamicItemDynamicWrapper{
     topic?: {
         name: string
     }
-    desc: {
+    desc?: {
         rich_text_nodes: RichTextNode[]
     }
-    major: {
+    major?: {
         draw:{
             items: DynamicItemDrawItem[]
         }
-        archive: {
-            badge: TextHolder
-            cover: string
-            duration_text: string
-            title: string
-            desc: string
-            stat: {
-                play: string
-                danmaku: string
-            }
-            bvid: string
-        }
+        archive?: DynamicMajorArchive
         opus: {
             jump_url: string
             summary: {
@@ -120,7 +112,7 @@ interface DynamicItemDynamicWrapper{
         }
         type: MAJOR_TYPES
     }
-    additional: AdditionalModuleWrapper
+    additional?: AdditionalModuleWrapper
 }
 
 interface AdditionalModuleWrapper {
@@ -176,4 +168,41 @@ interface LiveRoomInfo {
 
 interface LiveRoomMap{
     [key: string]: LiveRoomInfo
+}
+
+interface DynamicMajorArchive {
+    badge: TextHolder
+    cover: string
+    duration_text: string
+    title: string
+    desc: string
+    stat: {
+        play: string
+        danmaku: string
+    }
+    bvid: string
+}
+
+export {
+    BiliResp,
+    DYNAMIC_TYPES,
+    ADDITIONAL_TYPES,
+    MAJOR_TYPES,
+    RICH_TEXT_NODE_TYPES,
+    IsFollow,
+    FollowGroup,
+    Pagination,
+    TextHolder,
+    DynamicItem,
+    DynamicItemDynamicWrapper,
+    AdditionalModuleWrapper,
+    AdditionalModuleReserve,
+    RichTextNode,
+    DynamicItemDrawItem,
+    DynamicDetail,
+    OpusPicture,
+    LiveRoomInfo,
+    LiveRoomMap,
+    DynamicMajorArchive,
+    RENDER_TYPES,
 }
